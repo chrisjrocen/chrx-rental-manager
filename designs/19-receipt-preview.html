@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>19. Receipt preview — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 19. Receipt preview -->
+    <!-- 19. Receipt preview -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">19 · Payment confirmation / receipt <span style="color:#9aa0aa;font-weight:500">— PDF preview + email to tenant</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="payments" hint-size="100%,100%">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><div style="width:26px;height:26px;border-radius:50%;background:#e5f5eb;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" sc-camel-view-box="0 0 24 24" fill="none" stroke="#0a7d34" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div><h1 style="font-size:22px;font-weight:600;margin:0">Payment recorded</h1></div>
+            <p style="font-size:13px;color:#646970;margin:0 0 18px">Receipt <strong>#RС-2026-0418</strong> generated for Grace Owusu.</p>
+            <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:20px">
+              <div style="background:#e9ebef;border:1px solid #dcdcde;border-radius:6px;padding:26px;display:flex;justify-content:center">
+                <div style="width:420px;background:#fff;box-shadow:0 3px 14px rgba(0,0,0,.12);padding:34px 36px;font-size:12px;color:#1d2327">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1d2327;padding-bottom:14px;margin-bottom:18px"><div><div style="font-weight:800;font-size:16px">Sunrise Property Management</div><div style="color:#646970">14 Ring Road, Accra · +233 30 222 1180</div></div><div style="text-align:right"><div style="font-weight:800;font-size:15px">RECEIPT</div><div style="color:#646970">#RC-2026-0418</div></div></div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:18px"><div><div style="color:#646970;text-transform:uppercase;font-size:10px;letter-spacing:.05em;margin-bottom:3px">Received from</div><div style="font-weight:700">Grace Owusu</div><div>Unit B4 · Acacia Court</div></div><div style="text-align:right"><div style="color:#646970;text-transform:uppercase;font-size:10px;letter-spacing:.05em;margin-bottom:3px">Date</div><div>10 Jul 2026</div></div></div>
+                  <sc-raw-table style="width:100%;border-collapse:collapse;margin-bottom:16px"><sc-raw-tr style="border-bottom:1px solid #dcdcde"><sc-raw-td style="padding:7px 0;color:#646970">Rent — Jul 2026</sc-raw-td><sc-raw-td style="padding:7px 0;text-align:right;font-weight:600">GH₵ 1,800.00</sc-raw-td></sc-raw-tr><sc-raw-tr><sc-raw-td style="padding:10px 0;font-weight:800;font-size:14px">Total paid</sc-raw-td><sc-raw-td style="padding:10px 0;text-align:right;font-weight:800;font-size:14px">GH₵ 1,800.00</sc-raw-td></sc-raw-tr></sc-raw-table>
+                  <div style="display:flex;justify-content:space-between;color:#646970;border-top:1px dashed #c3c4c7;padding-top:12px"><span>Method: MTN Mobile Money</span><span>Balance: GH₵ 0.00</span></div>
+                  <div style="text-align:center;color:#8c8f94;margin-top:20px;font-size:11px">Thank you for your payment.</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:18px"><div style="font-weight:700;font-size:14px;margin-bottom:12px">Email receipt to tenant</div><div style="font-size:13px;color:#50575e;margin-bottom:6px">To</div><div style="background:#f6f7f7;border-radius:5px;padding:9px 12px;font-size:13px;margin-bottom:14px">grace.owusu@example.com</div><button style="width:100%;background:#2271b1;color:#fff;border:none;border-radius:4px;padding:10px;font-size:14px;font-weight:600;cursor:pointer">Email receipt</button></div>
+                <div style="display:flex;gap:10px"><button style="flex:1;background:#f6f7f7;color:#2271b1;border:1px solid #2271b1;border-radius:4px;padding:9px;font-size:13px;font-weight:600;cursor:pointer">Download PDF</button><button style="flex:1;background:#f6f7f7;color:#50575e;border:1px solid #c3c4c7;border-radius:4px;padding:9px;font-size:13px;cursor:pointer">Print</button></div>
+                <div style="background:#e5f5eb;border:1px solid #b6e0c2;border-radius:6px;padding:12px 14px;font-size:12px;color:#0a7d34;display:flex;gap:8px;align-items:flex-start"><span style="font-weight:700">✓</span> Ledger updated — Jul 2026 marked Paid.</div>
+              </div>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

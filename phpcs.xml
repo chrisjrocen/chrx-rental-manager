@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<ruleset name="Chrx Rental Manager">
+	<description>Coding standards for the Chrx Rental Manager plugin: WordPress-PHP conventions for anything touching WP APIs, PSR-12 for general class/method structure.</description>
+
+	<file>.</file>
+
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/designs/*</exclude-pattern>
+	<exclude-pattern>/assets/*</exclude-pattern>
+	<exclude-pattern>/tests/*</exclude-pattern>
+	<exclude-pattern>*.js</exclude-pattern>
+	<exclude-pattern>*.css</exclude-pattern>
+
+	<arg value="sp"/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+
+	<config name="testVersion" value="8.0-"/>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<!--
+		This codebase touches WP APIs (hooks, $wpdb, sanitization/escaping)
+		pervasively, so WordPress-Extra is the primary, enforced ruleset.
+		General class/method structure otherwise follows PSR-12 by
+		convention (strict_types, one class per file, typed properties,
+		explicit visibility) rather than via a second, conflicting sniff
+		set — WordPress's brace/indentation/naming rules and PSR-12's are
+		mutually exclusive (tabs vs. spaces, snake_case vs. camelCase), so
+		layering both wholesale produces unfixable contradictions.
+	-->
+	<rule ref="WordPress-Extra">
+		<exclude name="WordPress.Files.FileName"/>
+	</rule>
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="chrx-rental-manager"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

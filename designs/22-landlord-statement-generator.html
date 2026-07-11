@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>22. Landlord statement generator — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 22. Landlord statement generator -->
+    <!-- 22. Landlord statement generator -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">22 · Landlord statement generator <span style="color:#9aa0aa;font-weight:500">— select + preview + generate PDF</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="statements" hint-size="100%,100%">
+            <h1 style="font-size:23px;font-weight:600;margin:0 0 18px">Landlord statement</h1>
+            <div style="display:grid;grid-template-columns:320px 1fr;gap:22px">
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:20px;height:fit-content">
+                <div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Landlord-Owner</label><sc-raw-select style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>D. Appiah</option><option>R. Adjei</option></sc-raw-select></div>
+                <div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Property</label><sc-raw-select style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>Acacia Court</option><option>Palm View Apartments</option><option>All (D. Appiah)</option></sc-raw-select></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px"><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">From</label><input value="2026-06-01" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:13px"></div><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">To</label><input value="2026-06-30" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:13px"></div></div>
+                <button style="width:100%;background:#2271b1;color:#fff;border:none;border-radius:4px;padding:10px;font-size:14px;font-weight:600;cursor:pointer">Generate PDF</button>
+              </div>
+              <div style="background:#e9ebef;border:1px solid #dcdcde;border-radius:6px;padding:26px;display:flex;justify-content:center">
+                <div style="width:520px;background:#fff;box-shadow:0 3px 14px rgba(0,0,0,.12);padding:34px 40px;font-size:12px">
+                  <div style="border-bottom:2px solid #1d2327;padding-bottom:14px;margin-bottom:18px"><div style="font-weight:800;font-size:16px">Owner Statement — June 2026</div><div style="color:#646970">D. Appiah · Acacia Court · Prepared 10 Jul 2026</div></div>
+                  <sc-raw-table style="width:100%;border-collapse:collapse;margin-bottom:18px">
+                    <sc-raw-thead><sc-raw-tr><sc-raw-th style="text-align:left;padding:7px 0;border-bottom:1px solid #dcdcde;color:#646970;text-transform:uppercase;font-size:10px">Unit</sc-raw-th><sc-raw-th style="text-align:left;padding:7px 0;border-bottom:1px solid #dcdcde;color:#646970;text-transform:uppercase;font-size:10px">Tenant</sc-raw-th><sc-raw-th style="text-align:right;padding:7px 0;border-bottom:1px solid #dcdcde;color:#646970;text-transform:uppercase;font-size:10px">Collected</sc-raw-th></sc-raw-tr></sc-raw-thead>
+                    <sc-raw-tbody>
+                      <sc-raw-tr><sc-raw-td style="padding:7px 0">B4</sc-raw-td><sc-raw-td style="padding:7px 0">Grace Owusu</sc-raw-td><sc-raw-td style="padding:7px 0;text-align:right">GH₵ 1,800</sc-raw-td></sc-raw-tr>
+                      <sc-raw-tr><sc-raw-td style="padding:7px 0">B1</sc-raw-td><sc-raw-td style="padding:7px 0">Yaw Darko</sc-raw-td><sc-raw-td style="padding:7px 0;text-align:right">GH₵ 1,500</sc-raw-td></sc-raw-tr>
+                      <sc-raw-tr><sc-raw-td style="padding:7px 0">B2</sc-raw-td><sc-raw-td style="padding:7px 0;color:#8c8f94">Vacant</sc-raw-td><sc-raw-td style="padding:7px 0;text-align:right">GH₵ 0</sc-raw-td></sc-raw-tr>
+                    </sc-raw-tbody>
+                  </sc-raw-table>
+                  <div style="border-top:1px solid #dcdcde;padding-top:12px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span>Gross collected</span><span>GH₵ 19,800</span></div><div style="display:flex;justify-content:space-between;margin-bottom:5px;color:#646970"><span>Management fee (10%)</span><span>– GH₵ 1,980</span></div><div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px;border-top:1px solid #1d2327;margin-top:8px;padding-top:8px"><span>Net due to owner</span><span>GH₵ 17,820</span></div></div>
+                </div>
+              </div>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

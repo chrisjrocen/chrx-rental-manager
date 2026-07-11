@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>26. Empty-state onboarding — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- WARNING: div imbalance open=23 close=22 -->
+<!-- 26. Empty-state onboarding -->
+    <!-- 26. Empty-state onboarding -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">26 · First-run onboarding <span style="color:#9aa0aa;font-weight:500">— zero properties</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="dashboard" hint-size="100%,100%">
+            <div style="max-width:640px;margin:60px auto 0;text-align:center">
+              <div style="width:72px;height:72px;margin:0 auto 22px;border-radius:20px;background:#e4eefa;display:flex;align-items:center;justify-content:center"><svg width="36" height="36" sc-camel-view-box="0 0 24 24" fill="none" stroke="#2271b1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18 M6 21V4a1 1 0 011-1h10a1 1 0 011 1v17 M9 8h1 M14 8h1 M9 12h1 M14 12h1"></path></svg></div>
+              <h2 style="font-size:26px;font-weight:800;margin:0 0 10px">Welcome to Rental Manager</h2>
+              <p style="font-size:15px;color:#50575e;line-height:1.6;margin:0 0 26px">You don't have any properties yet. Add your first property, then create its units, tenants and leases — the dashboard fills in automatically as you go.</p>
+              <button style="background:#2271b1;color:#fff;border:none;border-radius:5px;padding:12px 26px;font-size:15px;font-weight:700;cursor:pointer">Add your first property</button>
+              <div style="display:flex;justify-content:center;gap:34px;margin-top:44px">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:150px"><div style="width:32px;height:32px;border-radius:50%;background:#2271b1;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">1</div><div style="font-size:13px;color:#50575e">Add a property &amp; its units</div></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:150px"><div style="width:32px;height:32px;border-radius:50%;background:#c3c4c7;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">2</div><div style="font-size:13px;color:#8c8f94">Add tenants &amp; leases</div></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:150px"><div style="width:32px;height:32px;border-radius:50%;background:#c3c4c7;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">3</div><div style="font-size:13px;color:#8c8f94">Record payments &amp; receipts</div></div>
+              </div>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+
+
+  <!-- ============================================================= -->
+  <!-- SECTION C — LANDLORD-OWNER -->
+  <!-- ============================================================= -->
+  <div id="secC" style="display:flex;align-items:baseline;gap:14px;margin-bottom:26px">
+    <div style="font-size:30px;font-weight:800;color:#b8862b;letter-spacing:-.01em">C</div>
+    <div>
+      <div style="font-size:22px;font-weight:800">Landlord-Owner — read-only, scoped</div>
+      <div style="font-size:14px;color:#646970">Amber accent + “Read-only” badge · nav limited to Dashboard, Reports &amp; Statements · sees only their own properties</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:46px;margin-bottom:76px">
+</body>
+</html>

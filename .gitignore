@@ -1,0 +1,19 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# PHPUnit / test artifacts
+.phpunit.result.cache
+tests/tmp/
+
+# Logs
+*.log
+
+# Local env
+.env
+
+# Note: vendor/ is intentionally committed (zero-build-step install requirement).

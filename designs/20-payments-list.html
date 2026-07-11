@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>20. Payments — list — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 20. Payments — list -->
+    <!-- 20. Payments — list -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">20 · Payments <span style="color:#9aa0aa;font-weight:500">— filter by property/date/method, export CSV</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="payments" hint-size="100%,100%">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><h1 style="font-size:23px;font-weight:600;margin:0">Payments</h1><button style="background:#f6f7f7;color:#2271b1;border:1px solid #2271b1;border-radius:4px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px"><svg width="15" height="15" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M7 10l5 5 5-5 M12 15V3"></path></svg>Export CSV</button></div>
+            <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+              <sc-raw-select style="padding:6px 10px;border:1px solid #8c8f94;border-radius:4px;background:#fff;font-size:13px"><option>All properties</option></sc-raw-select>
+              <sc-raw-select style="padding:6px 10px;border:1px solid #8c8f94;border-radius:4px;background:#fff;font-size:13px"><option>Any method</option><option>MTN MoMo</option><option>Airtel Money</option><option>Cash</option><option>Bank transfer</option></sc-raw-select>
+              <input value="Jul 2026" style="width:110px;padding:6px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:13px">
+              <span style="font-size:13px;color:#646970;margin-left:auto">24 payments · GH₵ 112,400</span>
+            </div>
+            <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;overflow:hidden">
+              <sc-raw-table style="width:100%;border-collapse:collapse">
+                <sc-raw-thead><sc-raw-tr><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Date</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Tenant</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Unit</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Method</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Amount</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Receipt</sc-raw-th></sc-raw-tr></sc-raw-thead>
+                <sc-raw-tbody>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">10 Jul</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">Grace Owusu</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">B4</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">MTN MoMo</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 1,800</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px"><a href="#">#RC-0418</a></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">09 Jul</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">Kwame Asante</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">A2</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Bank transfer</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 900</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px"><a href="#">#RC-0417</a></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">08 Jul</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">Ama Boateng</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">C1</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Cash</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 2,400</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px"><a href="#">#RC-0416</a></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">06 Jul</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">Yaw Darko</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">B1</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Airtel Money</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 1,500</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px"><a href="#">#RC-0415</a></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;font-size:13px">04 Jul</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px;font-weight:600">Efua Sarpong</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px">D3</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px">MTN MoMo</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px;text-align:right;font-weight:600">GH₵ 2,100</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px"><a href="#">#RC-0414</a></sc-raw-td></sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

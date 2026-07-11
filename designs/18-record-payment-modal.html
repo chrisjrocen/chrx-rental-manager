@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>18. Record Payment modal — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 18. Record Payment modal -->
+    <!-- 18. Record Payment modal -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">18 · Record Payment <span style="color:#9aa0aa;font-weight:500">— modal, live partial-payment handling</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px;position:relative">
+          <dc-import name="AdminShell" active-nav="leases" hint-size="100%,100%">
+            <div style="font-size:12px;color:#646970;margin-bottom:6px">Leases › Kwame Asante · A2</div>
+            <h1 style="font-size:23px;font-weight:600;margin:0">Kwame Asante — Unit A2</h1>
+            <div style="font-size:13px;color:#646970;margin-top:8px">Balance due GH₵ 900 · charge ledger below…</div>
+          </dc-import>
+          <div style="position:absolute;inset:0;background:rgba(20,26,32,.55);display:flex;align-items:center;justify-content:center">
+            <div style="width:460px;background:#fff;border-radius:10px;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);overflow:hidden">
+              <div style="padding:16px 22px;border-bottom:1px solid #dcdcde;display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700">Record Payment</div><div style="color:#8c8f94;font-size:20px;cursor:pointer">✕</div></div>
+              <div style="padding:22px">
+                <div style="background:#f6f7f7;border-radius:6px;padding:12px 14px;margin-bottom:18px;display:flex;justify-content:space-between;font-size:13px"><span style="color:#646970">Outstanding for Mar 2026</span><span style="font-weight:700">GH₵ 1,200</span></div>
+                <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Amount received (GH₵)</label>
+                <input value="900" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:15px;margin-bottom:8px">
+                <div style="background:#fbf0dd;border:1px solid #ecd9ad;border-radius:6px;padding:9px 12px;font-size:12px;color:#8a6116;font-weight:600;margin-bottom:16px">Partial payment — GH₵ 300 will remain outstanding. Charge stays “Partial”.</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Method</label><sc-raw-select style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>MTN Mobile Money</option><option>Airtel Money</option><option>Cash</option><option>Bank transfer</option><option>Other</option></sc-raw-select></div>
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Date</label><input value="2026-07-10" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+                </div>
+                <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Note <span style="color:#8c8f94;font-weight:400">(optional)</span></label>
+                <input value="MoMo ref 774102 · balance next week" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;margin-bottom:20px">
+                <div style="display:flex;gap:10px;justify-content:flex-end"><button style="background:#f6f7f7;color:#50575e;border:1px solid #c3c4c7;border-radius:4px;padding:9px 16px;font-size:14px;cursor:pointer">Cancel</button><button style="background:#2271b1;color:#fff;border:none;border-radius:4px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer">Save &amp; generate receipt</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

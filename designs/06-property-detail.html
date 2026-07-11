@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>06. Property detail — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 06. Property detail -->
+    <!-- 06. Property detail -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">06 · Property detail <span style="color:#9aa0aa;font-weight:500">— units, staff, landlord</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd">
+          <span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span>
+        </div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="properties" hint-size="100%,100%">
+            <div style="font-size:12px;color:#646970;margin-bottom:6px"><a href="#">Properties</a> › Acacia Court</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+              <div><h1 style="font-size:23px;font-weight:600;margin:0">Acacia Court</h1><div style="font-size:13px;color:#646970">14 Ring Road, Accra · 12 units</div></div>
+              <div style="display:flex;gap:8px"><button style="background:#f6f7f7;color:#2271b1;border:1px solid #2271b1;border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer">Edit property</button><button style="background:#2271b1;color:#fff;border:1px solid #2271b1;border-radius:4px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer">Add unit</button></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px">
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:15px 18px"><div style="font-size:11px;text-transform:uppercase;color:#646970;font-weight:700;margin-bottom:7px">Occupied</div><div style="font-size:26px;font-weight:800">11</div></div>
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:15px 18px"><div style="font-size:11px;text-transform:uppercase;color:#646970;font-weight:700;margin-bottom:7px">Vacant</div><div style="font-size:26px;font-weight:800">1</div></div>
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:15px 18px"><div style="font-size:11px;text-transform:uppercase;color:#646970;font-weight:700;margin-bottom:7px">Landlord-Owner</div><div style="font-size:15px;font-weight:700;margin-top:4px">D. Appiah</div><div style="font-size:12px;color:#646970">appiah@owner.co</div></div>
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:15px 18px"><div style="font-size:11px;text-transform:uppercase;color:#646970;font-weight:700;margin-bottom:7px">Assigned staff</div><div style="font-size:14px;font-weight:600;margin-top:4px">A. Mensah</div><div style="font-size:14px;font-weight:600">J. Tetteh</div></div>
+            </div>
+            <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;overflow:hidden">
+              <div style="padding:12px 16px;border-bottom:1px solid #dcdcde;font-weight:700;font-size:14px">Units</div>
+              <sc-raw-table style="width:100%;border-collapse:collapse">
+                <sc-raw-thead><sc-raw-tr><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Unit</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Type</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Tenant</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Rent</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Status</sc-raw-th></sc-raw-tr></sc-raw-thead>
+                <sc-raw-tbody>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">B4</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">2-bed</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Grace Owusu</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 1,800</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Occupied</span></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">B1</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">1-bed</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Yaw Darko</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 1,500</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Occupied</span></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">B2</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">2-bed</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;color:#8c8f94">—</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 1,900</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1"><span style="background:#eef0f2;color:#50575e;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Vacant</span></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;font-size:13px;font-weight:600">B3</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px">Studio</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px;color:#8c8f94">— (renovating)</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px;text-align:right">GH₵ 1,100</sc-raw-td><sc-raw-td style="padding:11px 16px"><span style="background:#fbf0dd;color:#8a6116;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Under Maintenance</span></sc-raw-td></sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

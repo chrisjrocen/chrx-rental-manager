@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>24. Notifications / Reminders settings — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 24. Notifications / Reminders settings -->
+    <!-- 24. Notifications / Reminders settings -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">24 · Reminders &amp; settings <span style="color:#9aa0aa;font-weight:500">— thresholds, late fee, currency</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="settings" hint-size="100%,100%">
+            <h1 style="font-size:23px;font-weight:600;margin:0 0 18px">Settings</h1>
+            <div style="max-width:760px;display:flex;flex-direction:column;gap:18px">
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:22px">
+                <div style="font-weight:700;font-size:15px;margin-bottom:4px">Lease renewal reminders</div>
+                <div style="font-size:13px;color:#646970;margin-bottom:16px">Notify staff before a lease expires.</div>
+                <div style="display:flex;gap:10px">
+                  <label style="display:flex;align-items:center;gap:7px;background:#e4eefa;border:1px solid #135e96;color:#135e96;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600"><input type="checkbox" checked="">30 days</label>
+                  <label style="display:flex;align-items:center;gap:7px;background:#e4eefa;border:1px solid #135e96;color:#135e96;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600"><input type="checkbox" checked="">14 days</label>
+                  <label style="display:flex;align-items:center;gap:7px;background:#e4eefa;border:1px solid #135e96;color:#135e96;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600"><input type="checkbox" checked="">7 days</label>
+                  <label style="display:flex;align-items:center;gap:7px;background:#f6f7f7;border:1px solid #c3c4c7;color:#646970;padding:7px 14px;border-radius:20px;font-size:13px"><input type="checkbox">3 days</label>
+                </div>
+              </div>
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:22px">
+                <div style="font-weight:700;font-size:15px;margin-bottom:16px">Late fees</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Grace period (days)</label><input value="5" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Late fee amount</label><div style="display:flex;gap:8px"><input value="50" style="flex:1;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"><sc-raw-select style="padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>Flat GH₵</option><option>% of rent</option></sc-raw-select></div></div>
+                </div>
+              </div>
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:22px">
+                <div style="font-weight:700;font-size:15px;margin-bottom:16px">Currency</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Currency</label><sc-raw-select style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>Ghana Cedi (GH₵)</option><option>Nigerian Naira (₦)</option><option>US Dollar ($)</option></sc-raw-select></div>
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Format</label><sc-raw-select style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>GH₵ 1,800.00</option><option>1,800.00 GH₵</option></sc-raw-select></div>
+                </div>
+              </div>
+              <div><button style="background:#2271b1;color:#fff;border:none;border-radius:4px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer">Save settings</button></div>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

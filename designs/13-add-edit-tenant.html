@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>13. Add/Edit Tenant — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 13. Add/Edit Tenant -->
+    <!-- 13. Add/Edit Tenant -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">13 · Add / Edit Tenant <span style="color:#9aa0aa;font-weight:500">— form</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="tenants" hint-size="100%,100%">
+            <div style="font-size:12px;color:#646970;margin-bottom:6px"><a href="#">Tenants</a> › Add new</div>
+            <h1 style="font-size:23px;font-weight:600;margin:0 0 18px">Add Tenant</h1>
+            <div style="max-width:720px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:24px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+                <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Full name</label><input value="Efua Sarpong" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+                <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Phone</label><input value="0246 331 774" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+                <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Email</label><input value="efua.sarpong@example.com" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+                <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">National ID</label><input value="GHA-118 4420 6" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+              </div>
+              <div style="margin-bottom:18px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Emergency contact</label><input value="Kofi Sarpong · 0209 887 213 · Brother" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#50575e;margin-bottom:22px;background:#f6f7f7;padding:11px 14px;border-radius:6px"><input type="checkbox" checked="">Send portal invite email after saving</label>
+              <div style="display:flex;gap:10px;border-top:1px solid #f0f0f1;padding-top:18px"><button style="background:#2271b1;color:#fff;border:none;border-radius:4px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer">Save Tenant</button><button style="background:#f6f7f7;color:#50575e;border:1px solid #c3c4c7;border-radius:4px;padding:9px 18px;font-size:14px;cursor:pointer">Cancel</button></div>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>1. Login — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 1. Login -->
+    <!-- 1. Login -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">01 · Login &nbsp;<span style="color:#9aa0aa;font-weight:500">— all roles</span></div>
+      <div style="width:560px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 14px 34px -18px rgba(20,30,50,.4)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd">
+          <span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span>
+          <div style="margin-left:8px;background:#fff;border:1px solid #d9dce1;border-radius:6px;font-size:11px;color:#787c82;padding:3px 12px">sunriseproperties.com/wp-login.php</div>
+        </div>
+        <div style="height:520px;background:#f0f0f1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:22px">
+            <svg width="42" height="42" sc-camel-view-box="0 0 24 24" fill="none" stroke="#1d2327" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5"></path><path d="M5 10v10h14V10"></path></svg>
+            <div style="font-size:13px;color:#50575e;font-weight:600">Sunrise Property Management</div>
+          </div>
+          <div style="width:326px;background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:26px 24px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+            <label style="display:block;font-size:14px;margin-bottom:5px;color:#1d2327">Email or Username</label>
+            <input value="a.mensah@sunrise.co" readonly="" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:3px;font-size:15px;margin-bottom:16px;background:#fff">
+            <label style="display:block;font-size:14px;margin-bottom:5px;color:#1d2327">Password</label>
+            <input type="password" value="passwordpass" readonly="" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:3px;font-size:15px;margin-bottom:16px">
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#50575e;margin-bottom:20px"><input type="checkbox" checked="" readonly="">Remember me</label>
+            <button style="width:100%;background:#2271b1;color:#fff;border:1px solid #2271b1;border-radius:3px;padding:10px;font-size:14px;font-weight:600;cursor:pointer">Log In</button>
+          </div>
+          <div style="margin-top:16px;font-size:13px"><a href="#3b">Lost your password?</a></div>
+          <div style="margin-top:8px;font-size:12px;color:#8c8f94">Redirects by role → Admin/Staff to Dashboard · Landlord to their portal · Tenant to the Self-Service Portal</div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

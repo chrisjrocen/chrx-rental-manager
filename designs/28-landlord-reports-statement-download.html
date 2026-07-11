@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>28. Landlord reports / statement download — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- WARNING: div imbalance open=14 close=13 -->
+<!-- 28. Landlord reports / statement download -->
+    <!-- 28. Landlord reports / statement download -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">28 · Landlord reports <span style="color:#9aa0aa;font-weight:500">— read-only, scoped, statement download</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="statements" role="landlord" hint-size="100%,100%">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><h1 style="font-size:23px;font-weight:600;margin:0">My statements</h1></div>
+            <div style="font-size:13px;color:#8a6116;background:#fbf0dd;border:1px solid #ecd9ad;border-radius:6px;padding:9px 14px;margin-bottom:20px">Statements are prepared by management. You can view and download, but not edit.</div>
+            <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;overflow:hidden">
+              <sc-raw-table style="width:100%;border-collapse:collapse">
+                <sc-raw-thead><sc-raw-tr><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Period</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Property</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Gross</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Net to you</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde"></sc-raw-th></sc-raw-tr></sc-raw-thead>
+                <sc-raw-tbody>
+                  <sc-raw-tr><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">June 2026</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Acacia Court</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 19,800</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 17,820</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;text-align:right"><button style="background:#f6f7f7;color:#b8862b;border:1px solid #b8862b;border-radius:4px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">Download PDF</button></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600">June 2026</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Palm View</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 20,800</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 18,720</sc-raw-td><sc-raw-td style="padding:12px 16px;border-bottom:1px solid #f0f0f1;text-align:right"><button style="background:#f6f7f7;color:#b8862b;border:1px solid #b8862b;border-radius:4px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">Download PDF</button></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:12px 16px;font-size:13px;font-weight:600">May 2026</sc-raw-td><sc-raw-td style="padding:12px 16px;font-size:13px">Acacia Court</sc-raw-td><sc-raw-td style="padding:12px 16px;font-size:13px;text-align:right">GH₵ 19,800</sc-raw-td><sc-raw-td style="padding:12px 16px;font-size:13px;text-align:right;font-weight:600">GH₵ 17,820</sc-raw-td><sc-raw-td style="padding:12px 16px;text-align:right"><button style="background:#f6f7f7;color:#b8862b;border:1px solid #b8862b;border-radius:4px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">Download PDF</button></sc-raw-td></sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+
+
+  <!-- ============================================================= -->
+  <!-- SECTION D — TENANT PORTAL -->
+  <!-- ============================================================= -->
+  <div id="secD" style="display:flex;align-items:baseline;gap:14px;margin-bottom:26px">
+    <div style="font-size:30px;font-weight:800;color:#135e96;letter-spacing:-.01em">D</div>
+    <div>
+      <div style="font-size:22px;font-weight:800">Tenant Self-Service Portal — front-end, mobile-first</div>
+      <div style="font-size:14px;color:#646970">Theme-agnostic page via shortcode · view-only in v1 · balance, lease, history, receipts</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start;margin-bottom:60px">
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>12. Tenant detail — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 12. Tenant detail -->
+    <!-- 12. Tenant detail -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">12 · Tenant detail <span style="color:#9aa0aa;font-weight:500">— contact, leases, docs, portal invite</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="tenants" hint-size="100%,100%">
+            <div style="font-size:12px;color:#646970;margin-bottom:6px"><a href="#">Tenants</a> › Grace Owusu</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+              <div style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:50%;background:#3858a8;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">GO</div><div><h1 style="font-size:22px;font-weight:600;margin:0">Grace Owusu</h1><div style="font-size:13px;color:#646970">Tenant since Aug 2024</div></div></div>
+              <button style="background:#f6f7f7;color:#2271b1;border:1px solid #2271b1;border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer">Edit tenant</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:18px">
+              <div style="display:flex;flex-direction:column;gap:18px">
+                <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:18px"><div style="font-weight:700;font-size:14px;margin-bottom:14px">Contact</div><div style="display:flex;flex-direction:column;gap:11px;font-size:13px"><div><div style="color:#646970;font-size:11px;text-transform:uppercase;margin-bottom:2px">Phone</div>0244 118 902</div><div><div style="color:#646970;font-size:11px;text-transform:uppercase;margin-bottom:2px">Email</div>grace.owusu@example.com</div><div><div style="color:#646970;font-size:11px;text-transform:uppercase;margin-bottom:2px">National ID</div>GHA-724 8830 1</div></div></div>
+                <div style="background:#e4eefa;border:1px solid #b9d3ef;border-radius:6px;padding:18px"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Portal access</div><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Active</span><span style="font-size:12px;color:#50575e">Last login 3 Jul 2026</span></div><button style="background:#fff;color:#135e96;border:1px solid #135e96;border-radius:4px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer">Resend invite</button></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:18px">
+                <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;overflow:hidden">
+                  <div style="padding:12px 16px;border-bottom:1px solid #dcdcde;font-weight:700;font-size:14px">Leases</div>
+                  <sc-raw-table style="width:100%;border-collapse:collapse">
+                    <sc-raw-thead><sc-raw-tr><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Unit</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Term</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Rent</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:9px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Status</sc-raw-th></sc-raw-tr></sc-raw-thead>
+                    <sc-raw-tbody>
+                      <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;font-weight:600"><a href="#">B4 · Acacia Court</a></sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Aug 2025 – Jul 2026</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 1,800</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Active</span></sc-raw-td></sc-raw-tr>
+                      <sc-raw-tr><sc-raw-td style="padding:11px 16px;font-size:13px;font-weight:600">B4 · Acacia Court</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px">Aug 2024 – Jul 2025</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px;text-align:right">GH₵ 1,700</sc-raw-td><sc-raw-td style="padding:11px 16px"><span style="background:#e4eefa;color:#135e96;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Renewed</span></sc-raw-td></sc-raw-tr>
+                    </sc-raw-tbody>
+                  </sc-raw-table>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:16px"><div style="font-weight:700;font-size:14px;margin-bottom:12px">Documents</div><div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:9px;font-size:13px"><span style="color:#b32d2e;font-weight:700">PDF</span> Signed tenancy agreement 2025.pdf</div><div style="display:flex;align-items:center;gap:9px;font-size:13px"><span style="color:#135e96;font-weight:700">IMG</span> National ID scan.jpg</div></div></div>
+              </div>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

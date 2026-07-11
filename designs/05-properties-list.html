@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>05. Properties — list — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 05. Properties — list -->
+    <!-- 05. Properties — list -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">05 · Properties <span style="color:#9aa0aa;font-weight:500">— list view</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd">
+          <span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span>
+          <div style="margin-left:8px;background:#fff;border:1px solid #d9dce1;border-radius:6px;font-size:11px;color:#787c82;padding:3px 12px">…/admin.php?page=rentals-properties</div>
+        </div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="properties" hint-size="100%,100%">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <h1 style="font-size:23px;font-weight:600;margin:0">Properties</h1>
+              <button style="background:#f6f7f7;color:#2271b1;border:1px solid #2271b1;border-radius:4px;padding:5px 11px;font-size:13px;font-weight:500;cursor:pointer">Add Property</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div style="font-size:13px;color:#646970">3 properties</div>
+              <input placeholder="Search properties…" style="width:240px;padding:6px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:13px">
+            </div>
+            <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;overflow:hidden">
+              <sc-raw-table style="width:100%;border-collapse:collapse">
+                <sc-raw-thead><sc-raw-tr>
+                  <sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Property</sc-raw-th>
+                  <sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Units</sc-raw-th>
+                  <sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Occupancy</sc-raw-th>
+                  <sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Landlord-Owner</sc-raw-th>
+                  <sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Assigned staff</sc-raw-th>
+                  <sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Monthly rent roll</sc-raw-th>
+                </sc-raw-tr></sc-raw-thead>
+                <sc-raw-tbody>
+                  <sc-raw-tr><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1"><a href="#" style="font-weight:600;font-size:14px">Acacia Court</a><div style="font-size:12px;color:#646970">14 Ring Road, Accra</div></sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">12</sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1"><div style="display:flex;align-items:center;gap:8px"><div style="width:70px;height:6px;background:#dcdcde;border-radius:3px;overflow:hidden"><div style="width:92%;height:100%;background:#0a7d34"></div></div><span style="font-size:12px;color:#646970">92%</span></div></sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">D. Appiah</sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">A. Mensah, J. Tetteh</sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 21,600</sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1"><a href="#" style="font-weight:600;font-size:14px">Cedar Heights</a><div style="font-size:12px;color:#646970">7 Spintex Road, Accra</div></sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">10</sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1"><div style="display:flex;align-items:center;gap:8px"><div style="width:70px;height:6px;background:#dcdcde;border-radius:3px;overflow:hidden"><div style="width:80%;height:100%;background:#0a7d34"></div></div><span style="font-size:12px;color:#646970">80%</span></div></sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">R. Adjei</sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">A. Mensah</sc-raw-td><sc-raw-td style="padding:13px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;font-weight:600">GH₵ 16,000</sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:13px 16px"><a href="#" style="font-weight:600;font-size:14px">Palm View Apartments</a><div style="font-size:12px;color:#646970">22 Cantonments, Accra</div></sc-raw-td><sc-raw-td style="padding:13px 16px;font-size:13px">8</sc-raw-td><sc-raw-td style="padding:13px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:70px;height:6px;background:#dcdcde;border-radius:3px;overflow:hidden"><div style="width:88%;height:100%;background:#0a7d34"></div></div><span style="font-size:12px;color:#646970">88%</span></div></sc-raw-td><sc-raw-td style="padding:13px 16px;font-size:13px">D. Appiah</sc-raw-td><sc-raw-td style="padding:13px 16px;font-size:13px">J. Tetteh</sc-raw-td><sc-raw-td style="padding:13px 16px;font-size:13px;text-align:right;font-weight:600">GH₵ 20,800</sc-raw-td></sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

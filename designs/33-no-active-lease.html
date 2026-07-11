@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>33. No active lease — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- WARNING: div imbalance open=42 close=46 -->
+<!-- 33. No active lease -->
+    <!-- 33. No active lease -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">33 · No active lease yet <span style="color:#9aa0aa;font-weight:500">— empty state</span></div>
+      <div style="width:390px;background:#0d1117;border-radius:46px;padding:13px;box-shadow:0 24px 60px -20px rgba(20,30,50,.5)">
+        <div style="border-radius:34px;overflow:hidden;background:#f4f6f8;height:788px;display:flex;flex-direction:column;font-family:-apple-system,'Segoe UI',Roboto,sans-serif">
+          <div style="background:#0f4c81;color:#fff;flex:0 0 auto;padding:12px 22px 18px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:16px"><span>9:41</span><span>Sunrise Residents</span></div>
+            <div style="font-size:13px;opacity:.8">Welcome,</div><div style="font-size:22px;font-weight:800">Daniel Osei</div>
+          </div>
+          <div style="flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+            <div style="width:74px;height:74px;border-radius:22px;background:#e4eefa;display:flex;align-items:center;justify-content:center;margin-bottom:20px"><svg width="36" height="36" sc-camel-view-box="0 0 24 24" fill="none" stroke="#0f4c81" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M9 15l2 2 4-4"></path></svg></div>
+            <div style="font-size:19px;font-weight:800;margin-bottom:10px;color:#12263a">No active lease yet</div>
+            <div style="font-size:14px;color:#50575e;line-height:1.6;margin-bottom:24px">Your portal is set up, but your lease hasn't started. Once you move in, your balance, lease details and receipts will appear here.</div>
+            <div style="background:#fff;border-radius:14px;padding:16px 18px;width:100%;box-sizing:border-box"><div style="font-size:12px;text-transform:uppercase;color:#8c8f94;font-weight:700;margin-bottom:6px">Expected move-in</div><div style="font-size:16px;font-weight:700;color:#12263a">1 Aug 2026 · Unit A3, Cedar Heights</div></div>
+            <div style="font-size:12px;color:#8c8f94;margin-top:22px">Questions? Call the office on 030 222 1180.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 29 desktop responsive -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">29 (desktop) · Portal home <span style="color:#9aa0aa;font-weight:500">— same page, wide breakpoint inside theme</span></div>
+      <div style="width:720px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span><div style="margin-left:8px;background:#fff;border:1px solid #d9dce1;border-radius:6px;font-size:11px;color:#787c82;padding:3px 12px">sunriseproperties.com/my-account</div></div>
+        <div style="height:620px;background:#f4f6f8;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:auto">
+          <div style="background:#12263a;color:#fff;padding:14px 34px;display:flex;justify-content:space-between;align-items:center"><div style="font-weight:800">Sunrise Residents</div><div style="display:flex;gap:22px;font-size:13px;opacity:.85"><span>Home</span><span>My Lease</span><span>Payments</span><span>Log out</span></div></div>
+          <div style="padding:34px;max-width:900px;margin:0 auto">
+            <div style="font-size:13px;color:#646970">Welcome back,</div><div style="font-size:26px;font-weight:800;margin-bottom:20px">Grace Owusu <span style="font-size:14px;font-weight:500;color:#646970">· Unit B4, Acacia Court</span></div>
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px;margin-bottom:20px">
+              <div style="background:#fff;border-radius:14px;padding:22px"><div style="font-size:12px;text-transform:uppercase;color:#8c8f94;font-weight:700;margin-bottom:8px">Current balance</div><div style="font-size:32px;font-weight:800;color:#b32d2e">GH₵ 1,850</div><div style="margin-top:10px"><span style="background:#fbe6e6;color:#b32d2e;padding:4px 11px;border-radius:12px;font-size:12px;font-weight:700">Overdue · incl. GH₵ 50 late fee</span></div></div>
+              <div style="background:#fff;border-radius:14px;padding:22px"><div style="font-size:12px;text-transform:uppercase;color:#8c8f94;font-weight:700;margin-bottom:8px">Next due</div><div style="font-size:19px;font-weight:800">1 Aug 2026</div><div style="font-size:13px;color:#646970;margin-top:4px">GH₵ 1,800</div></div>
+              <div style="background:#fff;border-radius:14px;padding:22px"><div style="font-size:12px;text-transform:uppercase;color:#8c8f94;font-weight:700;margin-bottom:8px">Deposit</div><div style="font-size:19px;font-weight:800">GH₵ 3,600</div><div style="margin-top:8px"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Held</span></div></div>
+            </div>
+            <div style="background:#fff;border-radius:14px;padding:8px"><a href="#" style="display:flex;justify-content:space-between;padding:15px;border-bottom:1px solid #f0f0f1"><span style="font-weight:600;color:#12263a">Payment history</span><span style="color:#8c8f94">›</span></a><a href="#" style="display:flex;justify-content:space-between;padding:15px"><span style="font-weight:600;color:#12263a">Lease details &amp; receipts</span><span style="color:#8c8f94">›</span></a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+</div></div></x-dc></body></html>
+</body>
+</html>

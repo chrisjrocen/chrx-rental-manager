@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>14. Leases — list — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 14. Leases — list -->
+    <!-- 14. Leases — list -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">14 · Leases <span style="color:#9aa0aa;font-weight:500">— filter by status, expiring-soon flag</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="leases" hint-size="100%,100%">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><h1 style="font-size:23px;font-weight:600;margin:0">Leases</h1><button style="background:#f6f7f7;color:#2271b1;border:1px solid #2271b1;border-radius:4px;padding:5px 11px;font-size:13px;cursor:pointer">Add Lease</button></div>
+            <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+              <sc-raw-select style="padding:6px 10px;border:1px solid #8c8f94;border-radius:4px;background:#fff;font-size:13px"><option>All statuses</option><option>Active</option><option>Ended</option><option>Renewed</option></sc-raw-select>
+              <sc-raw-select style="padding:6px 10px;border:1px solid #8c8f94;border-radius:4px;background:#fff;font-size:13px"><option>All properties</option></sc-raw-select>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#50575e"><input type="checkbox" checked="">Expiring within 30 days</label>
+              <span style="font-size:13px;color:#646970;margin-left:auto">32 leases</span>
+            </div>
+            <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;overflow:hidden">
+              <sc-raw-table style="width:100%;border-collapse:collapse">
+                <sc-raw-thead><sc-raw-tr><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Tenant / Unit</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Term</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Rent</sc-raw-th><sc-raw-th style="text-align:right;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Balance</sc-raw-th><sc-raw-th style="text-align:left;font-size:11px;text-transform:uppercase;color:#646970;padding:10px 16px;background:#f6f7f7;border-bottom:1px solid #dcdcde">Status</sc-raw-th></sc-raw-tr></sc-raw-thead>
+                <sc-raw-tbody>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px"><a href="#" style="font-weight:600">Grace Owusu</a><div style="color:#646970;font-size:12px">B4 · Acacia Court</div></sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Aug 2025 – Jul 2026 <span style="background:#fbe6e6;color:#b32d2e;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">7 days left</span></sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 1,800</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 0</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Active</span></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px"><a href="#" style="font-weight:600">Kwame Asante</a><div style="color:#646970;font-size:12px">A2 · Cedar Heights</div></sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">Mar 2026 – Feb 2027</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 1,200</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right;color:#b32d2e;font-weight:600">GH₵ 900</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Active</span></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px"><a href="#" style="font-weight:600">Kojo Antwi</a><div style="color:#646970;font-size:12px">A5 · Palm View</div></sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px">May 2025 – Apr 2026 <span style="background:#fbf0dd;color:#8a6116;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">14 days left</span></sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 2,600</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1;font-size:13px;text-align:right">GH₵ 0</sc-raw-td><sc-raw-td style="padding:11px 16px;border-bottom:1px solid #f0f0f1"><span style="background:#e5f5eb;color:#0a7d34;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Active</span></sc-raw-td></sc-raw-tr>
+                  <sc-raw-tr><sc-raw-td style="padding:11px 16px;font-size:13px"><a href="#" style="font-weight:600">S. Nkrumah</a><div style="color:#646970;font-size:12px">B4 · Acacia Court</div></sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px">Aug 2024 – Jul 2025</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px;text-align:right">GH₵ 1,700</sc-raw-td><sc-raw-td style="padding:11px 16px;font-size:13px;text-align:right">GH₵ 0</sc-raw-td><sc-raw-td style="padding:11px 16px"><span style="background:#eef0f2;color:#50575e;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:600">Ended</span></sc-raw-td></sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

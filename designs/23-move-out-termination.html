@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>23. Move-out / termination — Chrx Rental Manager design reference</title>
+<style>
+body{margin:0;background:#e7e9ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;padding:40px;}
+a{color:#2271b1;text-decoration:none;}
+a:hover{color:#135e96;}
+
+  body{margin:0;background:#e7e9ee;}
+  a{color:#2271b1;text-decoration:none;}
+  a:hover{color:#135e96;}
+  @keyframes rmShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+</style>
+</head>
+<body>
+<!-- 23. Move-out / termination -->
+    <!-- 23. Move-out / termination -->
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:12px;font-weight:700;color:#5b6270">23 · Move-out / Lease termination <span style="color:#9aa0aa;font-weight:500">— final balance, deposit refund, unit status</span></div>
+      <div style="width:1280px;background:#fff;border:1px solid #d4d7dd;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px -22px rgba(20,30,50,.45)">
+        <div style="height:34px;background:#e9ebef;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid #d4d7dd"><span style="width:11px;height:11px;border-radius:50%;background:#ec6a5e"></span><span style="width:11px;height:11px;border-radius:50%;background:#f4bf50"></span><span style="width:11px;height:11px;border-radius:50%;background:#61c454"></span></div>
+        <div style="height:820px">
+          <dc-import name="AdminShell" active-nav="leases" hint-size="100%,100%">
+            <div style="font-size:12px;color:#646970;margin-bottom:6px"><a href="#">Leases</a> › Kojo Antwi · A5 › Move-out</div>
+            <h1 style="font-size:23px;font-weight:600;margin:0 0 18px">Move-out — Kojo Antwi, Unit A5</h1>
+            <div style="display:grid;grid-template-columns:1fr 380px;gap:22px">
+              <div style="background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:24px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Move-out date</label><input value="2026-07-31" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px"></div>
+                  <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Set unit status to</label><sc-raw-select style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>Vacant</option><option>Under Maintenance</option><option>Reserved</option></sc-raw-select></div>
+                </div>
+                <div style="font-weight:700;font-size:14px;margin-bottom:12px">Deposit settlement</div>
+                <div style="border:1px solid #dcdcde;border-radius:6px;overflow:hidden;margin-bottom:20px">
+                  <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f0f0f1;font-size:13px"><span>Deposit held</span><span style="font-weight:600">GH₵ 5,200</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f0f0f1;font-size:13px"><span>Outstanding rent (Jul)</span><span style="color:#b32d2e;font-weight:600">– GH₵ 2,600</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #f0f0f1;font-size:13px"><span>Deductions (cleaning, damages)</span><input value="400" style="width:90px;padding:5px 8px;border:1px solid #8c8f94;border-radius:4px;font-size:13px;text-align:right"></div>
+                  <div style="display:flex;justify-content:space-between;padding:12px 14px;background:#f6f7f7;font-size:14px;font-weight:800"><span>Refund to tenant</span><span style="color:#0a7d34">GH₵ 2,200</span></div>
+                </div>
+                <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Refund method</label>
+                <sc-raw-select style="width:260px;box-sizing:border-box;padding:8px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff"><option>MTN Mobile Money</option><option>Bank transfer</option><option>Cash</option></sc-raw-select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:#fdf5f5;border:1px solid #f0c9c9;border-radius:6px;padding:16px;font-size:13px;color:#b32d2e;display:flex;gap:10px"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z M12 9v4 M12 17h.01"></path></svg><div>Terminating ends the lease and closes its ledger. This cannot be undone.</div></div>
+                <button style="background:#b32d2e;color:#fff;border:none;border-radius:4px;padding:11px;font-size:14px;font-weight:700;cursor:pointer">Complete move-out</button>
+                <button style="background:#f6f7f7;color:#50575e;border:1px solid #c3c4c7;border-radius:4px;padding:10px;font-size:14px;cursor:pointer">Cancel</button>
+              </div>
+            </div>
+          </dc-import>
+        </div>
+      </div>
+    </div>
+</body>
+</html>
