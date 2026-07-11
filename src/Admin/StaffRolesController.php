@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Admin;
 
+use ChrxRentalManager\Admin\Support\FlashNotice;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Data\PropertyLandlord;
 use ChrxRentalManager\Data\PropertyStaff;
@@ -73,7 +74,7 @@ final class StaffRolesController {
 			wp_die( esc_html__( 'You do not have permission to manage staff & roles.', 'chrx-rental-manager' ), 403 );
 		}
 
-		$notice = $this->take_flash_notice();
+		$notice = FlashNotice::take( 'staff_roles' );
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param, no state change.
 		$action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
@@ -85,23 +86,6 @@ final class StaffRolesController {
 		}
 
 		$this->render_list( $notice );
-	}
-
-	private function flash_notice( string $message ): void {
-		set_transient( 'rm_staff_roles_notice_' . get_current_user_id(), $message, 60 );
-	}
-
-	private function take_flash_notice(): ?string {
-		$key    = 'rm_staff_roles_notice_' . get_current_user_id();
-		$notice = get_transient( $key );
-
-		if ( false === $notice ) {
-			return null;
-		}
-
-		delete_transient( $key );
-
-		return (string) $notice;
 	}
 
 	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- $notice is used by the included template, which shares this method's local scope.
@@ -174,7 +158,7 @@ final class StaffRolesController {
 		);
 
 		if ( ! in_array( $role, array( RoleManager::ROLE_STAFF, RoleManager::ROLE_LANDLORD_OWNER ), true ) ) {
-			$this->flash_notice( __( 'Please choose a valid role.', 'chrx-rental-manager' ) );
+			FlashNotice::set( 'staff_roles', __( 'Please choose a valid role.', 'chrx-rental-manager' ) );
 			wp_safe_redirect( $back_to_form );
 			exit;
 		}
@@ -188,7 +172,7 @@ final class StaffRolesController {
 			$created_user_id = $this->create_user( $name, $email, $role );
 
 			if ( is_wp_error( $created_user_id ) ) {
-				$this->flash_notice( $created_user_id->get_error_message() );
+				FlashNotice::set( 'staff_roles', $created_user_id->get_error_message() );
 				wp_safe_redirect( $back_to_form );
 				exit;
 			}

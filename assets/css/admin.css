@@ -83,8 +83,177 @@
 	color: #b32d2e;
 }
 
+.chrx-rm-badge--waived,
+.chrx-rm-badge--former {
+	background: #eef0f2;
+	color: #50575e;
+}
+
+/* Entity list/detail/form screens (Properties, Units, Tenants, Leases). */
+.chrx-rm-list-toolbar {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 14px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.chrx-rm-list-toolbar__count {
+	font-size: 13px;
+	color: #646970;
+	margin-left: auto;
+}
+
+.chrx-rm-tabs {
+	display: flex;
+	gap: 0;
+	margin-bottom: 14px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.chrx-rm-tabs a {
+	padding: 8px 14px;
+	font-size: 13px;
+	color: #646970;
+	text-decoration: none;
+	margin-bottom: -1px;
+}
+
+.chrx-rm-tabs a.is-active {
+	font-weight: 600;
+	color: #2271b1;
+	border-bottom: 2px solid #2271b1;
+}
+
+.chrx-rm-breadcrumb {
+	font-size: 12px;
+	color: #646970;
+	margin-bottom: 6px;
+}
+
+.chrx-rm-detail-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 18px;
+}
+
+.chrx-rm-detail-header__title {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.chrx-rm-detail-header__title h1 {
+	font-size: 22px;
+	font-weight: 600;
+	margin: 0;
+}
+
+.chrx-rm-detail-header__actions {
+	display: flex;
+	gap: 8px;
+}
+
+.chrx-rm-stat-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 14px;
+	margin-bottom: 20px;
+}
+
+.chrx-rm-stat-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 13px 15px;
+}
+
+.chrx-rm-stat-card__label {
+	font-size: 10px;
+	text-transform: uppercase;
+	color: #646970;
+	font-weight: 700;
+	margin-bottom: 5px;
+}
+
+.chrx-rm-stat-card__value {
+	font-size: 17px;
+	font-weight: 800;
+}
+
+.chrx-rm-panel {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	overflow: hidden;
+	margin-bottom: 18px;
+}
+
+.chrx-rm-panel__header {
+	padding: 12px 16px;
+	border-bottom: 1px solid #dcdcde;
+	font-weight: 700;
+	font-size: 14px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.chrx-rm-panel__body {
+	padding: 16px;
+}
+
+.chrx-rm-empty-state {
+	text-align: center;
+	padding: 40px 20px;
+}
+
+.chrx-rm-empty-state__title {
+	font-size: 15px;
+	font-weight: 700;
+	margin-bottom: 6px;
+}
+
+.chrx-rm-empty-state__desc {
+	font-size: 13px;
+	color: #646970;
+	margin-bottom: 16px;
+	line-height: 1.5;
+}
+
+.chrx-rm-chip-list {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.chrx-rm-chip {
+	background: #e4eefa;
+	color: #135e96;
+	padding: 4px 10px;
+	border-radius: 14px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.chrx-rm-chip button {
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+	font-weight: 700;
+	margin-left: 4px;
+	padding: 0;
+}
+
 @media (max-width: 782px) {
 	.chrx-rm-admin__form .form-table th {
 		width: auto;
+	}
+
+	.chrx-rm-stat-grid {
+		grid-template-columns: 1fr 1fr;
 	}
 }

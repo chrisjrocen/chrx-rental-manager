@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Admin;
 
+use ChrxRentalManager\Admin\Support\PortalStatus;
 use ChrxRentalManager\Auth\Pages;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\NotificationLog;
@@ -106,8 +107,23 @@ final class TenantInviteController {
 			return new \WP_Error( 'rm_no_email', __( 'This tenant has no valid email on file. Add one before inviting them to the portal.', 'chrx-rental-manager' ) );
 		}
 
-		if ( null !== $tenant['wp_user_id'] && '' !== (string) $tenant['wp_user_id'] ) {
-			return new \WP_Error( 'rm_already_invited', __( 'This tenant already has portal access.', 'chrx-rental-manager' ) );
+		$already_linked = null !== $tenant['wp_user_id'] && '' !== (string) $tenant['wp_user_id'];
+
+		if ( $already_linked ) {
+			$existing_user = get_userdata( (int) $tenant['wp_user_id'] );
+
+			if ( false === $existing_user ) {
+				return new \WP_Error( 'rm_already_invited', __( 'This tenant already has portal access.', 'chrx-rental-manager' ) );
+			}
+
+			if ( PortalStatus::ACTIVE === PortalStatus::for_tenant( $tenant ) ) {
+				return new \WP_Error( 'rm_already_invited', __( 'This tenant already has portal access.', 'chrx-rental-manager' ) );
+			}
+
+			// Invited but never completed setup — this is a resend, not a
+			// fresh invite: regenerate the key and email it again rather
+			// than erroring.
+			return $this->resend( $existing_user, $tenant );
 		}
 
 		$user = get_user_by( 'email', $tenant['email'] );
@@ -139,6 +155,27 @@ final class TenantInviteController {
 
 		if ( ! $sent ) {
 			return new \WP_Error( 'rm_email_failed', __( 'Portal account created, but the invite email could not be sent.', 'chrx-rental-manager' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param array<string,mixed> $tenant
+	 * @return true|\WP_Error
+	 */
+	private function resend( \WP_User $user, array $tenant ) {
+		$sent = $this->send_invite_email( $user, $tenant );
+
+		$this->notifications->record(
+			'portal_invite_resend',
+			$tenant['email'],
+			(int) $tenant['id'],
+			$sent ? NotificationLog::STATUS_SENT : NotificationLog::STATUS_FAILED
+		);
+
+		if ( ! $sent ) {
+			return new \WP_Error( 'rm_email_failed', __( 'The invite email could not be sent.', 'chrx-rental-manager' ) );
 		}
 
 		return true;
