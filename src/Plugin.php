@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager;
 
+use ChrxRentalManager\Data\Migrator;
 use ChrxRentalManager\Roles\RoleManager;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,8 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Core plugin container. Instantiated once on `plugins_loaded`; wires up
- * the subsystems added in later phases (data layer, admin screens, cron,
- * portal). Phase 0 only wires role registration.
+ * the subsystems added in later phases (admin screens, cron, portal).
  */
 final class Plugin {
 
@@ -40,18 +40,17 @@ final class Plugin {
 			dirname( plugin_basename( PLUGIN_FILE ) ) . '/languages'
 		);
 
-		// Keeps role capability sets current if the plugin was updated
-		// in place without a full deactivate/reactivate cycle.
+		// Detects a schema/role version bump without requiring a full
+		// deactivate/reactivate cycle (e.g. plugin updated in place).
 		add_action( 'admin_init', array( $this, 'maybe_upgrade' ) );
 	}
 
 	public function maybe_upgrade(): void {
-		$installed = get_option( DB_SCHEMA_OPTION, '0' );
+		Migrator::maybe_migrate();
 
-		if ( '0' === $installed ) {
-			$this->role_manager->register_roles();
-			update_option( DB_SCHEMA_OPTION, VERSION );
-		}
+		// Idempotent — add_role() no-ops if the role already exists, so
+		// this is safe to run on every admin_init.
+		$this->role_manager->register_roles();
 	}
 
 	public function role_manager(): RoleManager {

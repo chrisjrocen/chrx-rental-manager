@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Integration tests need a real local WordPress + MySQL environment (see
+	tests/Integration/bootstrap.php for the required WP_LOAD_PATH / optional
+	DB_SOCKET environment variables) — unlike phpunit.xml.dist's unit suite,
+	this is not runnable with zero configuration.
+-->
+<phpunit
+	bootstrap="tests/Integration/bootstrap.php"
+	colors="true"
+>
+	<testsuites>
+		<testsuite name="integration">
+			<directory suffix="Test.php">tests/Integration</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>

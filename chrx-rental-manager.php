@@ -90,9 +90,9 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\on_activate' );
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\on_deactivate' );
 
 /**
- * Activation: register DB schema version option (tables created in a later
- * phase's migration runner) and the four custom roles (capability sets are
- * filled in during the Roles & Permissions phase — empty for now).
+ * Activation: create/update the wp_rm_* tables and register the three
+ * custom roles (capability sets are filled in during the Roles &
+ * Permissions phase — empty for now).
  */
 function on_activate(): void {
 	if ( ! meets_minimum_requirements() ) {
@@ -113,8 +113,7 @@ function on_activate(): void {
 		);
 	}
 
-	// Schema version option — no tables yet, that's Phase 1's migration runner.
-	add_option( DB_SCHEMA_OPTION, '0' );
+	Data\Migrator::migrate();
 
 	( new Roles\RoleManager() )->register_roles();
 
@@ -146,5 +145,9 @@ function bootstrap(): void {
 	}
 
 	Plugin::instance()->init();
+
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		\WP_CLI::add_command( 'chrx-rm seed', array( new Cli\SeedCommand(), 'run' ) );
+	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\bootstrap' );

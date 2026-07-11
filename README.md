@@ -22,12 +22,24 @@ See `SPEC.md` for the full implementation spec (data model, business rules, edge
 
 ```bash
 composer install
-composer test   # PHPUnit
+composer test   # PHPUnit (unit tests — no DB required)
 composer cs      # phpcs
 composer cbf      # phpcbf (auto-fix)
 ```
 
 `vendor/` is committed to the repository so the plugin works with zero build step on any host — do not add `vendor/` to `.gitignore`.
+
+### Integration tests
+
+`tests/Integration` exercises real `$wpdb` behavior (table creation, CRUD, soft delete, the no-double-active-lease constraint) against a live WordPress + MySQL environment — there's no isolated WP test-suite scaffold in this project, so point it at a real local install. Each test runs inside a transaction that's rolled back afterward, so it's safe to run against a dev site's existing database.
+
+```bash
+WP_LOAD_PATH="/absolute/path/to/wp-load.php" \
+DB_SOCKET="/path/to/mysqld.sock" \
+composer test:integration
+```
+
+`DB_SOCKET` is only needed if your `DB_HOST` doesn't resolve to the right MySQL instance by default (e.g. Local by Flywheel runs one MySQL per site on its own socket) — omit it if a plain WP-CLI/`wp-load.php` bootstrap already connects fine.
 
 ## PDF library
 
