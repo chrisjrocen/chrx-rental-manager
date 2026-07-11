@@ -1,0 +1,165 @@
+/* Chrx Rental Manager — front-end auth screens (login, forgot/reset password,
+   tenant portal activation). Mirrors designs/01-login.html,
+   designs/02-3a-forgot-password-request.html, designs/03b-set-new-password.html,
+   designs/03-tenant-invite-set-password.html. */
+
+.chrx-rm-auth {
+	max-width: 360px;
+	margin: 48px auto;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+	color: #1d2327;
+}
+
+.chrx-rm-auth__brand {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 22px;
+}
+
+.chrx-rm-auth__logo {
+	display: block;
+	width: 42px;
+	height: 42px;
+	background: currentColor;
+	-webkit-mask: no-repeat center / contain;
+	mask: no-repeat center / contain;
+}
+
+.chrx-rm-auth__brand-name {
+	font-size: 13px;
+	color: #50575e;
+	font-weight: 600;
+}
+
+.chrx-rm-auth__card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 26px 24px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.chrx-rm-auth__card--branded {
+	border-radius: 14px;
+	padding: 30px 28px;
+	box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .5);
+}
+
+.chrx-rm-auth__card h2 {
+	font-size: 18px;
+	margin: 0 0 16px;
+	font-weight: 700;
+}
+
+.chrx-rm-auth__card--branded h2 {
+	font-size: 21px;
+	margin: 0 0 6px;
+	font-weight: 800;
+}
+
+.chrx-rm-auth__intro {
+	font-size: 13px;
+	color: #50575e;
+	line-height: 1.55;
+	margin: 0 0 18px;
+}
+
+.chrx-rm-auth__form label {
+	display: block;
+	font-size: 14px;
+	margin-bottom: 5px;
+	color: #1d2327;
+}
+
+.chrx-rm-auth__form input[type="text"],
+.chrx-rm-auth__form input[type="email"],
+.chrx-rm-auth__form input[type="password"] {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 9px 10px;
+	border: 1px solid #8c8f94;
+	border-radius: 3px;
+	font-size: 15px;
+	margin-bottom: 16px;
+}
+
+.chrx-rm-auth__checkbox {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 13px;
+	color: #50575e;
+	margin-bottom: 20px;
+}
+
+.chrx-rm-auth__checkbox input {
+	margin: 0;
+}
+
+.chrx-rm-auth__form button {
+	width: 100%;
+	background: #2271b1;
+	color: #fff;
+	border: 1px solid #2271b1;
+	border-radius: 3px;
+	padding: 10px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.chrx-rm-auth__card--branded .chrx-rm-auth__form button {
+	background: #135e96;
+	border-color: #135e96;
+	border-radius: 8px;
+	padding: 12px;
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.chrx-rm-auth__form button:hover {
+	background: #135e96;
+}
+
+.chrx-rm-auth__error {
+	background: #fbe6e6;
+	color: #b32d2e;
+	border-radius: 4px;
+	padding: 10px 12px;
+	font-size: 13px;
+	margin: 0 0 16px;
+}
+
+.chrx-rm-auth__success {
+	background: #e5f5eb;
+	color: #0a7d34;
+	border-radius: 4px;
+	padding: 12px 14px;
+	font-size: 14px;
+	line-height: 1.5;
+	margin: 0;
+}
+
+.chrx-rm-auth__links {
+	text-align: center;
+	margin-top: 16px;
+	font-size: 13px;
+}
+
+.chrx-rm-auth__links a {
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.chrx-rm-auth__links a:hover {
+	color: #135e96;
+}
+
+@media (max-width: 480px) {
+	.chrx-rm-auth {
+		max-width: 100%;
+		margin: 24px 16px;
+	}
+}

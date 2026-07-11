@@ -20,6 +20,13 @@ abstract class AbstractRepository {
 	/** Table name without the $wpdb prefix, e.g. 'rm_properties'. */
 	protected const TABLE = '';
 
+	/**
+	 * Every table has a created_at column except rm_notifications_log
+	 * (which uses sent_at instead) — NotificationLog overrides this to
+	 * false so insert() doesn't try to populate a column that doesn't exist.
+	 */
+	protected const HAS_CREATED_AT = true;
+
 	protected function wpdb(): \wpdb {
 		global $wpdb;
 		return $wpdb;
@@ -53,7 +60,7 @@ abstract class AbstractRepository {
 	public function insert( array $data ): int|false {
 		$wpdb = $this->wpdb();
 
-		if ( ! array_key_exists( 'created_at', $data ) ) {
+		if ( static::HAS_CREATED_AT && ! array_key_exists( 'created_at', $data ) ) {
 			$data['created_at'] = current_time( 'mysql' );
 		}
 

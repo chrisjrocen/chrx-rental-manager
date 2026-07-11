@@ -17,6 +17,8 @@ final class NotificationLog extends AbstractRepository {
 
 	protected const TABLE = 'rm_notifications_log';
 
+	protected const HAS_CREATED_AT = false;
+
 	public const STATUS_SENT    = 'sent';
 	public const STATUS_FAILED  = 'failed';
 	public const STATUS_SKIPPED = 'skipped';

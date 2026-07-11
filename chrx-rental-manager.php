@@ -90,9 +90,9 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\on_activate' );
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\on_deactivate' );
 
 /**
- * Activation: create/update the wp_rm_* tables and register the three
- * custom roles (capability sets are filled in during the Roles &
- * Permissions phase — empty for now).
+ * Activation: create/update the wp_rm_* tables, register the three
+ * custom roles + capabilities and extend Administrator, and create the
+ * front-end auth/portal pages the shortcodes need a URL for.
  */
 function on_activate(): void {
 	if ( ! meets_minimum_requirements() ) {
@@ -116,6 +116,7 @@ function on_activate(): void {
 	Data\Migrator::migrate();
 
 	( new Roles\RoleManager() )->register_roles();
+	( new Auth\Pages() )->ensure_pages_exist();
 
 	flush_rewrite_rules();
 }
