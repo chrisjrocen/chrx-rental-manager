@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Admin;
 
+use ChrxRentalManager\Admin\Support\Csv;
 use ChrxRentalManager\Admin\Support\FlashNotice;
 use ChrxRentalManager\Billing\ReceiptMailer;
 use ChrxRentalManager\Billing\ReceiptPdf;
@@ -219,15 +220,17 @@ final class PaymentsController {
 
 			fputcsv(
 				$out,
-				array(
-					gmdate( 'Y-m-d', strtotime( $row['paid_at'] ) ),
-					null === $tenant ? '' : $tenant['full_name'],
-					null === $unit ? '' : $unit['unit_label'],
-					null === $property ? '' : $property['name'],
-					PaymentsListTable::method_label( $row['method'] ),
-					number_format( (float) $row['amount'], 2, '.', '' ),
-					$row['reference_note'],
-					null === $receipt ? '' : $receipt['receipt_number'],
+				Csv::safe_row(
+					array(
+						gmdate( 'Y-m-d', strtotime( $row['paid_at'] ) ),
+						null === $tenant ? '' : $tenant['full_name'],
+						null === $unit ? '' : $unit['unit_label'],
+						null === $property ? '' : $property['name'],
+						PaymentsListTable::method_label( $row['method'] ),
+						number_format( (float) $row['amount'], 2, '.', '' ),
+						$row['reference_note'],
+						null === $receipt ? '' : $receipt['receipt_number'],
+					)
 				)
 			);
 		}

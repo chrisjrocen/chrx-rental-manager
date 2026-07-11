@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Admin;
 
+use ChrxRentalManager\Admin\Support\Csv;
 use ChrxRentalManager\Admin\Support\Reports;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\Property;
@@ -177,11 +178,13 @@ final class ReportsController {
 			$rate = $row['total'] > 0 ? round( $row['occupied'] / $row['total'] * 100 ) : 0;
 			fputcsv(
 				$out,
-				array(
-					$row['property']['name'],
-					$row['occupied'],
-					$row['total'],
-					$rate . '%',
+				Csv::safe_row(
+					array(
+						$row['property']['name'],
+						$row['occupied'],
+						$row['total'],
+						$rate . '%',
+					)
 				)
 			);
 		}
@@ -197,13 +200,15 @@ final class ReportsController {
 		foreach ( $this->reports->outstanding_balances( $property_ids, $as_of ) as $row ) {
 			fputcsv(
 				$out,
-				array(
-					null === $row['tenant'] ? '' : $row['tenant']['full_name'],
-					null === $row['unit'] ? '' : $row['unit']['unit_label'],
-					null === $row['property'] ? '' : $row['property']['name'],
-					number_format( (float) $row['balance'], 2, '.', '' ),
-					$row['days_overdue'],
-					$row['status'],
+				Csv::safe_row(
+					array(
+						null === $row['tenant'] ? '' : $row['tenant']['full_name'],
+						null === $row['unit'] ? '' : $row['unit']['unit_label'],
+						null === $row['property'] ? '' : $row['property']['name'],
+						number_format( (float) $row['balance'], 2, '.', '' ),
+						$row['days_overdue'],
+						$row['status'],
+					)
 				)
 			);
 		}
@@ -228,13 +233,15 @@ final class ReportsController {
 
 			fputcsv(
 				$out,
-				array(
-					gmdate( 'Y-m-d', strtotime( $row['paid_at'] ) ),
-					null === $tenant ? '' : $tenant['full_name'],
-					null === $unit ? '' : $unit['unit_label'],
-					null === $property ? '' : $property['name'],
-					PaymentsListTable::method_label( $row['method'] ),
-					number_format( (float) $row['amount'], 2, '.', '' ),
+				Csv::safe_row(
+					array(
+						gmdate( 'Y-m-d', strtotime( $row['paid_at'] ) ),
+						null === $tenant ? '' : $tenant['full_name'],
+						null === $unit ? '' : $unit['unit_label'],
+						null === $property ? '' : $property['name'],
+						PaymentsListTable::method_label( $row['method'] ),
+						number_format( (float) $row['amount'], 2, '.', '' ),
+					)
 				)
 			);
 		}
