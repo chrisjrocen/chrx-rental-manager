@@ -74,9 +74,13 @@ final class Ledger {
 	}
 
 	/**
+	 * Public: the Payments phase's recording flow needs "how much is
+	 * still owed on this specific charge" to compute partial/overpayment
+	 * handling, not just the lease-wide total this class otherwise exposes.
+	 *
 	 * @param array<string,mixed> $charge
 	 */
-	private function outstanding_for_charge( array $charge ): float {
+	public function outstanding_for_charge( array $charge ): float {
 		$paid = 0.0;
 
 		foreach ( $this->payments->for_charge( (int) $charge['id'] ) as $payment ) {

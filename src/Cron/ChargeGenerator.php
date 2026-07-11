@@ -5,6 +5,7 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Cron;
 
 use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Billing\PaymentAllocator;
 use ChrxRentalManager\Data\Charge;
 use ChrxRentalManager\Data\Lease;
 
@@ -30,10 +31,12 @@ final class ChargeGenerator {
 
 	private Lease $leases;
 	private Charge $charges;
+	private PaymentAllocator $payment_allocator;
 
-	public function __construct( ?Lease $leases = null, ?Charge $charges = null ) {
-		$this->leases  = $leases ?? new Lease();
-		$this->charges = $charges ?? new Charge();
+	public function __construct( ?Lease $leases = null, ?Charge $charges = null, ?PaymentAllocator $payment_allocator = null ) {
+		$this->leases            = $leases ?? new Lease();
+		$this->charges           = $charges ?? new Charge();
+		$this->payment_allocator = $payment_allocator ?? new PaymentAllocator( null, $this->charges );
 	}
 
 	/**
@@ -59,7 +62,7 @@ final class ChargeGenerator {
 				continue;
 			}
 
-			$this->charges->insert(
+			$charge_id = $this->charges->insert(
 				array(
 					'lease_id'        => (int) $lease['id'],
 					'period_start'    => $period['period_start'],
@@ -69,6 +72,14 @@ final class ChargeGenerator {
 					'status'          => Charge::STATUS_UNPAID,
 				)
 			);
+
+			if ( false !== $charge_id ) {
+				// SPEC.md §4.3 edge case: an earlier overpayment's excess
+				// is an unallocated credit sitting on the lease — apply it
+				// to this newly generated charge rather than leaving it
+				// dangling until someone notices.
+				$this->payment_allocator->apply_credits_to_charge( (int) $lease['id'], $charge_id );
+			}
 
 			++$created;
 		}

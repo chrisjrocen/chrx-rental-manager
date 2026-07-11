@@ -4,7 +4,8 @@
  * Variables in scope: $charge_lead_days (int), $reminder_thresholds (array<int,int>),
  * $reminder_notify_tenant (bool), $late_fee_grace_days (int),
  * $late_fee_amount (float), $late_fee_type (string), $currency_symbol (string),
- * $currency_format (string), $notice (?string).
+ * $currency_format (string), $company_name (string), $company_address (string),
+ * $company_phone (string), $notice (?string).
  *
  * @package ChrxRentalManager
  */
@@ -95,6 +96,27 @@ $available_thresholds = array( 30, 14, 7, 3 );
 								</option>
 							</select>
 						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div class="chrx-rm-panel">
+			<div class="chrx-rm-panel__body">
+				<div style="font-weight:700;font-size:15px;margin-bottom:4px;"><?php esc_html_e( 'Receipt letterhead', 'chrx-rental-manager' ); ?></div>
+				<div style="font-size:13px;color:#646970;margin-bottom:16px;"><?php esc_html_e( 'Shown at the top of every payment receipt PDF.', 'chrx-rental-manager' ); ?></div>
+				<table class="form-table">
+					<tr>
+						<th><label for="rm_company_name"><?php esc_html_e( 'Company name', 'chrx-rental-manager' ); ?></label></th>
+						<td><input type="text" id="rm_company_name" name="rm_company_name" value="<?php echo esc_attr( $company_name ); ?>" style="width:100%;max-width:360px;"></td>
+					</tr>
+					<tr>
+						<th><label for="rm_company_address"><?php esc_html_e( 'Address', 'chrx-rental-manager' ); ?></label></th>
+						<td><input type="text" id="rm_company_address" name="rm_company_address" value="<?php echo esc_attr( $company_address ); ?>" style="width:100%;max-width:360px;"></td>
+					</tr>
+					<tr>
+						<th><label for="rm_company_phone"><?php esc_html_e( 'Phone', 'chrx-rental-manager' ); ?></label></th>
+						<td><input type="text" id="rm_company_phone" name="rm_company_phone" value="<?php echo esc_attr( $company_phone ); ?>" style="width:100%;max-width:360px;"></td>
 					</tr>
 				</table>
 			</div>

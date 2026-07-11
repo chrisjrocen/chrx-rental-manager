@@ -74,25 +74,28 @@ final class LateFeeApplierTest extends IntegrationTestCase {
 	}
 
 	public function test_charge_exactly_at_the_grace_period_boundary_is_not_yet_late(): void {
-		// due_date + 5 days == now: still inside the grace period.
+		// due_date + 5 days == now: still inside the grace period. Asserts
+		// against this test's own lease rather than apply()'s global
+		// return count — apply() scans every overdue charge site-wide
+		// (SPEC.md's late-fee cron isn't lease-scoped), so a dev DB with
+		// other seeded/overdue data would otherwise make this test flaky.
 		$due_date = current_time( 'Y-m-d' );
 		$due_date = gmdate( 'Y-m-d', strtotime( $due_date . ' -5 days' ) );
 		$this->insert_charge_due( $due_date );
 
-		$created = $this->applier->apply();
+		$this->applier->apply();
 
-		$this->assertSame( 0, $created );
+		$late_fees = array_filter( $this->charges->for_lease( $this->lease_id ), fn( array $c ): bool => Charge::TYPE_LATE_FEE === $c['type'] );
+		$this->assertCount( 0, $late_fees );
 	}
 
 	public function test_charge_one_day_past_the_grace_period_gets_a_late_fee(): void {
 		$due_date = gmdate( 'Y-m-d', strtotime( current_time( 'Y-m-d' ) . ' -6 days' ) );
 		$this->insert_charge_due( $due_date );
 
-		$created = $this->applier->apply();
+		$this->applier->apply();
 
-		$this->assertSame( 1, $created );
-
-		$charges = $this->charges->for_lease( $this->lease_id );
+		$charges  = $this->charges->for_lease( $this->lease_id );
 		$late_fee = array_values( array_filter( $charges, fn( array $c ): bool => Charge::TYPE_LATE_FEE === $c['type'] ) );
 
 		$this->assertCount( 1, $late_fee );

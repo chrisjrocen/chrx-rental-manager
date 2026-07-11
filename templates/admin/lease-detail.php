@@ -2,9 +2,11 @@
 /**
  * Lease detail — charge ledger (designs/15-lease-detail-charge-ledger.html).
  *
- * "Renew lease" and "Move-out" (designs/17, /23) are live, built in the
- * Billing phase. "Record Payment" is still shown disabled — it belongs
- * to the Payments & Receipts phase, not this one.
+ * "Renew lease" and "Move-out" (designs/17, /23) are built in the Billing
+ * phase; "Record Payment" (designs/18) is built in the Payments &
+ * Receipts phase. All three are live regardless of lease status — a
+ * closing-out payment against an ended lease is allowed (SPEC.md §4.3
+ * edge case), flagged distinctly on the record-payment screen itself.
  *
  * Variables in scope: $lease (array), $unit (?array), $tenant (?array),
  * $property (?array), $charges (array<int,array> with 'paid' added),
@@ -96,7 +98,22 @@ $deposit_badge_key = 'paid' === $lease['deposit_status'] ? 'paid' : 'unpaid';
 				?>
 							" class="button"><?php esc_html_e( 'Move-out', 'chrx-rental-manager' ); ?></a>
 			<?php endif; ?>
-			<button type="button" class="button button-primary" disabled title="<?php esc_attr_e( 'Available in a later phase', 'chrx-rental-manager' ); ?>"><?php esc_html_e( 'Record Payment', 'chrx-rental-manager' ); ?></button>
+			<?php if ( $can_manage ) : ?>
+				<a href="
+				<?php
+				echo esc_url(
+					add_query_arg(
+						array(
+							'page'   => 'chrx-rm-leases',
+							'action' => 'record-payment',
+							'id'     => $lease['id'],
+						),
+						admin_url( 'admin.php' )
+					)
+				);
+				?>
+							" class="button button-primary"><?php esc_html_e( 'Record Payment', 'chrx-rental-manager' ); ?></a>
+			<?php endif; ?>
 			<?php if ( $can_manage ) : ?>
 				<?php
 				$archive_url = wp_nonce_url(

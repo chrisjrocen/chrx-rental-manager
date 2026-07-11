@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Top-level "Rental Manager" wp-admin menu. Dashboard is a placeholder
- * until the Landlord Dashboard & Reporting phase; Payments/Reports
- * submenus are added in their respective later phases.
+ * until the Landlord Dashboard & Reporting phase; Reports submenu is
+ * added in that later phase.
  */
 final class Menu {
 
@@ -23,6 +23,7 @@ final class Menu {
 	private TenantsController $tenants_controller;
 	private LeasesController $leases_controller;
 	private DocumentsController $documents_controller;
+	private PaymentsController $payments_controller;
 	private SettingsController $settings_controller;
 
 	public function __construct(
@@ -32,6 +33,7 @@ final class Menu {
 		?TenantsController $tenants_controller = null,
 		?LeasesController $leases_controller = null,
 		?DocumentsController $documents_controller = null,
+		?PaymentsController $payments_controller = null,
 		?SettingsController $settings_controller = null
 	) {
 		$this->staff_roles_controller = $staff_roles_controller ?? new StaffRolesController();
@@ -40,6 +42,7 @@ final class Menu {
 		$this->tenants_controller     = $tenants_controller ?? new TenantsController();
 		$this->leases_controller      = $leases_controller ?? new LeasesController();
 		$this->documents_controller   = $documents_controller ?? new DocumentsController();
+		$this->payments_controller    = $payments_controller ?? new PaymentsController();
 		$this->settings_controller    = $settings_controller ?? new SettingsController();
 	}
 
@@ -51,6 +54,7 @@ final class Menu {
 		$this->tenants_controller->register();
 		$this->leases_controller->register();
 		$this->documents_controller->register();
+		$this->payments_controller->register();
 		$this->settings_controller->register();
 	}
 
@@ -108,6 +112,15 @@ final class Menu {
 			RoleManager::CAP_VIEW_DASHBOARD,
 			LeasesController::page_slug(),
 			array( $this->leases_controller, 'render' )
+		);
+
+		add_submenu_page(
+			'chrx-rental-manager',
+			__( 'Payments', 'chrx-rental-manager' ),
+			__( 'Payments', 'chrx-rental-manager' ),
+			RoleManager::CAP_VIEW_DASHBOARD,
+			PaymentsController::page_slug(),
+			array( $this->payments_controller, 'render' )
 		);
 
 		add_submenu_page(

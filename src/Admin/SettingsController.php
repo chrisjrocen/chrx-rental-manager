@@ -60,6 +60,9 @@ final class SettingsController {
 		$late_fee_type          = Settings::late_fee_type();
 		$currency_symbol        = Settings::currency_symbol();
 		$currency_format        = Settings::currency_format();
+		$company_name           = Settings::company_name();
+		$company_address        = Settings::company_address();
+		$company_phone          = Settings::company_phone();
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/settings.php';
 	}
@@ -83,6 +86,12 @@ final class SettingsController {
 		$currency_symbol = isset( $_POST['rm_currency_symbol'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_currency_symbol'] ) ) : 'GH₵';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$currency_format = isset( $_POST['rm_currency_format'] ) ? sanitize_key( wp_unslash( $_POST['rm_currency_format'] ) ) : Settings::CURRENCY_FORMAT_SYMBOL_FIRST;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$company_name = isset( $_POST['rm_company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_company_name'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$company_address = isset( $_POST['rm_company_address'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_company_address'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$company_phone = isset( $_POST['rm_company_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_company_phone'] ) ) : '';
 
 		$back_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
 
@@ -106,6 +115,9 @@ final class SettingsController {
 			Settings::OPT_CURRENCY_FORMAT,
 			in_array( $currency_format, array( Settings::CURRENCY_FORMAT_SYMBOL_FIRST, Settings::CURRENCY_FORMAT_SYMBOL_LAST ), true ) ? $currency_format : Settings::CURRENCY_FORMAT_SYMBOL_FIRST
 		);
+		update_option( Settings::OPT_COMPANY_NAME, $company_name );
+		update_option( Settings::OPT_COMPANY_ADDRESS, $company_address );
+		update_option( Settings::OPT_COMPANY_PHONE, $company_phone );
 
 		FlashNotice::set( 'settings', __( 'Settings saved.', 'chrx-rental-manager' ) );
 		wp_safe_redirect( $back_url );

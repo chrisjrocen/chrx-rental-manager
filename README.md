@@ -43,7 +43,7 @@ composer test:integration
 
 ## PDF library
 
-A PDF library is required starting in the Payments & Receipts phase (PDF receipts) and reused for landlord statements. Not yet added — see the `extra.chrx-rental-manager` note in `composer.json` for the candidate and rationale, finalized in that phase.
+Payment receipts (and, later, landlord statements) are generated with **dompdf/dompdf** — pure-PHP, no external binary/extension dependency, so a site on standard shared hosting can `composer install` it without shell access to install a system package. See `src/Billing/ReceiptPdf.php` for the full rationale.
 
 ## Roadmap (v2, not built in v1 — see SPEC.md §8/§9)
 

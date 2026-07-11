@@ -24,6 +24,9 @@ final class Settings {
 	public const OPT_LATE_FEE_TYPE          = 'chrx_rm_late_fee_type';
 	public const OPT_CURRENCY_SYMBOL        = 'chrx_rm_currency_symbol';
 	public const OPT_CURRENCY_FORMAT        = 'chrx_rm_currency_format';
+	public const OPT_COMPANY_NAME           = 'chrx_rm_company_name';
+	public const OPT_COMPANY_ADDRESS        = 'chrx_rm_company_address';
+	public const OPT_COMPANY_PHONE          = 'chrx_rm_company_phone';
 
 	public const LATE_FEE_TYPE_FLAT    = 'flat';
 	public const LATE_FEE_TYPE_PERCENT = 'percent';
@@ -95,5 +98,24 @@ final class Settings {
 		return in_array( $format, array( self::CURRENCY_FORMAT_SYMBOL_FIRST, self::CURRENCY_FORMAT_SYMBOL_LAST ), true )
 			? $format
 			: self::CURRENCY_FORMAT_SYMBOL_FIRST;
+	}
+
+	/**
+	 * Letterhead details for receipts (designs/19) and, in a later phase,
+	 * landlord statement PDFs, which reuse this same setting rather than
+	 * collecting it twice.
+	 */
+	public static function company_name(): string {
+		$name = (string) get_option( self::OPT_COMPANY_NAME, '' );
+
+		return '' !== $name ? $name : get_bloginfo( 'name' );
+	}
+
+	public static function company_address(): string {
+		return (string) get_option( self::OPT_COMPANY_ADDRESS, '' );
+	}
+
+	public static function company_phone(): string {
+		return (string) get_option( self::OPT_COMPANY_PHONE, '' );
 	}
 }
