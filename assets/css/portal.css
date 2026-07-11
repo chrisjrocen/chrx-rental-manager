@@ -1,0 +1,472 @@
+/* Chrx Rental Manager — tenant self-service portal ([rental_portal]).
+   Mobile-first per SPEC.md §4.6: single-column stacked cards by default,
+   no data tables that force horizontal scroll. A wider top-nav layout
+   takes over at the tablet/desktop breakpoints (designs/29's "desktop
+   responsive" reference, ~768px+). Scoped entirely under .chrx-rm-portal
+   so it never leaks into (or is overridden by) the active theme. */
+
+.chrx-rm-portal {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+	color: #1d2327;
+	max-width: 100%;
+}
+
+.chrx-rm-portal * {
+	box-sizing: border-box;
+}
+
+.chrx-rm-portal a {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* Mobile banner header (phone default) */
+.chrx-rm-portal__mobile-header {
+	background: #0f4c81;
+	color: #fff;
+	padding: 18px 20px 22px;
+}
+
+.chrx-rm-portal__mobile-header-top {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.chrx-rm-portal__back {
+	font-size: 20px;
+	line-height: 1;
+}
+
+.chrx-rm-portal__mobile-header-title {
+	font-size: 19px;
+	font-weight: 800;
+}
+
+.chrx-rm-portal__welcome {
+	font-size: 13px;
+	opacity: .8;
+}
+
+.chrx-rm-portal__name {
+	font-size: 22px;
+	font-weight: 800;
+	margin-top: 2px;
+}
+
+.chrx-rm-portal__subtitle {
+	font-size: 12px;
+	opacity: .8;
+	margin-top: 2px;
+}
+
+/* Desktop top nav (hidden on phone) */
+.chrx-rm-portal__desktop-nav {
+	display: none;
+}
+
+/* Content */
+.chrx-rm-portal__content {
+	padding: 18px;
+}
+
+.chrx-rm-portal__card {
+	background: #fff;
+	border-radius: 16px;
+	padding: 20px;
+	margin-bottom: 16px;
+	box-shadow: 0 6px 20px -14px rgba(20, 30, 50, .25);
+}
+
+.chrx-rm-portal__card-row {
+	display: flex;
+	justify-content: space-between;
+	font-size: 14px;
+	margin-bottom: 13px;
+}
+
+.chrx-rm-portal__card-row:last-child {
+	margin-bottom: 0;
+}
+
+.chrx-rm-portal__card-row-label {
+	color: #646970;
+}
+
+.chrx-rm-portal__card-row-value {
+	font-weight: 600;
+	text-align: right;
+}
+
+.chrx-rm-portal__card-title {
+	font-size: 14px;
+	font-weight: 700;
+	margin-bottom: 14px;
+}
+
+.chrx-rm-portal__label {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: .05em;
+	color: #8c8f94;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+
+.chrx-rm-portal__balance {
+	font-size: 34px;
+	font-weight: 800;
+	line-height: 1;
+}
+
+.chrx-rm-portal__balance--overdue {
+	color: #b32d2e;
+}
+
+.chrx-rm-portal__balance--clear {
+	color: #0a7d34;
+}
+
+.chrx-rm-portal__pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 4px 11px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.chrx-rm-portal__pill--overdue {
+	background: #fbe6e6;
+	color: #b32d2e;
+}
+
+.chrx-rm-portal__pill--ok {
+	background: #e5f5eb;
+	color: #0a7d34;
+}
+
+.chrx-rm-portal__pill--partial {
+	background: #fbf0dd;
+	color: #8a6116;
+}
+
+.chrx-rm-portal__stat-row {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.chrx-rm-portal__stat {
+	flex: 1;
+	background: #fff;
+	border-radius: 14px;
+	padding: 16px;
+}
+
+.chrx-rm-portal__stat-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	color: #8c8f94;
+	font-weight: 700;
+	margin-bottom: 6px;
+}
+
+.chrx-rm-portal__stat-value {
+	font-size: 16px;
+	font-weight: 700;
+}
+
+.chrx-rm-portal__stat-sub {
+	font-size: 12px;
+	color: #646970;
+	margin-top: 2px;
+}
+
+.chrx-rm-portal__links {
+	background: #fff;
+	border-radius: 14px;
+	padding: 6px;
+	margin-bottom: 16px;
+}
+
+.chrx-rm-portal__link-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 12px;
+	border-bottom: 1px solid #f0f0f1;
+	font-size: 14px;
+	font-weight: 600;
+	color: #12263a;
+}
+
+.chrx-rm-portal__link-row:last-child {
+	border-bottom: none;
+}
+
+.chrx-rm-portal__link-chevron {
+	color: #8c8f94;
+}
+
+.chrx-rm-portal__pay-note {
+	font-size: 12px;
+	color: #8c8f94;
+	text-align: center;
+	line-height: 1.5;
+}
+
+/* Payment history — stacked cards, never a data table that needs
+   horizontal scroll on a narrow viewport (SPEC.md §4.6). */
+.chrx-rm-portal__payment-card {
+	background: #fff;
+	border-radius: 14px;
+	padding: 16px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.chrx-rm-portal__payment-amount {
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.chrx-rm-portal__payment-meta {
+	font-size: 12px;
+	color: #646970;
+	margin-top: 3px;
+}
+
+.chrx-rm-portal__receipt-link {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	color: #0f4c81;
+	font-size: 13px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* Receipt detail */
+.chrx-rm-portal__receipt-card {
+	background: #fff;
+	border-radius: 16px;
+	padding: 24px;
+	box-shadow: 0 6px 20px -14px rgba(20, 30, 50, .25);
+	margin-bottom: 18px;
+}
+
+.chrx-rm-portal__receipt-brand {
+	text-align: center;
+	border-bottom: 1px dashed #dcdcde;
+	padding-bottom: 16px;
+	margin-bottom: 16px;
+}
+
+.chrx-rm-portal__receipt-brand-name {
+	font-weight: 800;
+	font-size: 16px;
+}
+
+.chrx-rm-portal__receipt-number {
+	font-size: 12px;
+	color: #646970;
+}
+
+.chrx-rm-portal__receipt-total {
+	display: flex;
+	justify-content: space-between;
+	border-top: 1px solid #1d2327;
+	padding-top: 14px;
+	font-weight: 800;
+	font-size: 16px;
+}
+
+.chrx-rm-portal__download-button {
+	width: 100%;
+	background: #0f4c81;
+	color: #fff;
+	border: none;
+	border-radius: 12px;
+	padding: 15px;
+	font-size: 15px;
+	font-weight: 700;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+/* Empty state ("no active lease yet") */
+.chrx-rm-portal__empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 40px 24px;
+	text-align: center;
+}
+
+.chrx-rm-portal__empty-icon {
+	width: 74px;
+	height: 74px;
+	border-radius: 22px;
+	background: #e4eefa;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 20px;
+	color: #0f4c81;
+}
+
+.chrx-rm-portal__empty-title {
+	font-size: 19px;
+	font-weight: 800;
+	margin-bottom: 10px;
+	color: #12263a;
+}
+
+.chrx-rm-portal__empty-body {
+	font-size: 14px;
+	color: #50575e;
+	line-height: 1.6;
+	margin-bottom: 24px;
+	max-width: 340px;
+}
+
+.chrx-rm-portal__empty-box {
+	background: #fff;
+	border-radius: 14px;
+	padding: 16px 18px;
+	width: 100%;
+	max-width: 340px;
+}
+
+.chrx-rm-portal__empty-footer {
+	font-size: 12px;
+	color: #8c8f94;
+	margin-top: 22px;
+}
+
+/* Mobile bottom tab bar */
+.chrx-rm-portal__tabbar {
+	display: flex;
+	justify-content: space-around;
+	background: #fff;
+	border-top: 1px solid #e6e9ee;
+	padding: 11px 0 14px;
+}
+
+.chrx-rm-portal__tab {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 3px;
+	color: #8c8f94;
+	font-size: 10px;
+	font-weight: 600;
+}
+
+.chrx-rm-portal__tab--active {
+	color: #0f4c81;
+}
+
+.chrx-rm-portal__logged-out,
+.chrx-rm-portal__not-a-tenant {
+	max-width: 420px;
+	margin: 40px auto;
+	text-align: center;
+	padding: 0 20px;
+}
+
+/* ---- Tablet / desktop breakpoint (SPEC.md §4.6: single mobile-first
+   codebase, wider layout takes over here) ---- */
+@media (min-width: 768px) {
+	.chrx-rm-portal__mobile-header,
+	.chrx-rm-portal__tabbar,
+	.chrx-rm-portal__back {
+		display: none;
+	}
+
+	.chrx-rm-portal__desktop-nav {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: #12263a;
+		color: #fff;
+		padding: 16px 34px;
+	}
+
+	.chrx-rm-portal__desktop-nav-brand {
+		font-weight: 800;
+	}
+
+	.chrx-rm-portal__desktop-nav-links {
+		display: flex;
+		gap: 24px;
+		font-size: 13px;
+	}
+
+	.chrx-rm-portal__desktop-nav-links a {
+		opacity: .85;
+	}
+
+	.chrx-rm-portal__desktop-nav-links a:hover,
+	.chrx-rm-portal__desktop-nav-links a.chrx-rm-portal__desktop-nav-link--active {
+		opacity: 1;
+		font-weight: 700;
+	}
+
+	.chrx-rm-portal__content {
+		max-width: 900px;
+		margin: 0 auto;
+		padding: 34px;
+	}
+
+	.chrx-rm-portal__desktop-heading {
+		font-size: 13px;
+		color: #646970;
+	}
+
+	.chrx-rm-portal__desktop-name {
+		font-size: 26px;
+		font-weight: 800;
+		margin-bottom: 20px;
+	}
+
+	.chrx-rm-portal__desktop-name-sub {
+		font-size: 14px;
+		font-weight: 500;
+		color: #646970;
+	}
+
+	.chrx-rm-portal__stat-row {
+		display: grid;
+		grid-template-columns: 1.4fr 1fr 1fr;
+	}
+
+	.chrx-rm-portal__balance {
+		font-size: 32px;
+	}
+
+	/* Payment-history cards become a two-column grid at this width — still
+	   no forced horizontal scroll, just a denser stacked layout. */
+	.chrx-rm-portal__payment-list {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 12px;
+	}
+
+	.chrx-rm-portal__payment-card {
+		margin-bottom: 0;
+	}
+}
+
+@media (min-width: 1024px) {
+	.chrx-rm-portal__payment-list {
+		grid-template-columns: 1fr 1fr 1fr;
+	}
+}

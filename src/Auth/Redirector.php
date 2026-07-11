@@ -63,9 +63,25 @@ final class Redirector {
 	 * already redirects them out of wp-admin, but this makes the "cannot
 	 * use wp-admin" rule explicit and independent of that capability
 	 * detail ever changing.
+	 *
+	 * admin-post.php is exempt: it lives under wp-admin/ and fires
+	 * `admin_init` like any other admin page, but it's also the standard
+	 * WP mechanism for a logged-in front-end user to reach a form-handler
+	 * action (TenantInviteController's own portal-activation flow relies
+	 * on it, and so does Portal\PortalReceiptDownload for the tenant
+	 * portal's receipt PDFs) — bouncing every admin-post.php hit would
+	 * make a tenant's own "Download PDF" button redirect to the portal
+	 * home instead of downloading anything. Each individual admin-post
+	 * handler still does its own capability/ownership check.
 	 */
 	public function bounce_tenants_out_of_wp_admin(): void {
 		if ( wp_doing_ajax() ) {
+			return;
+		}
+
+		global $pagenow;
+
+		if ( 'admin-post.php' === $pagenow ) {
 			return;
 		}
 

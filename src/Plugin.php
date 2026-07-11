@@ -14,6 +14,8 @@ use ChrxRentalManager\Auth\Redirector;
 use ChrxRentalManager\Auth\ResetPasswordForm;
 use ChrxRentalManager\Cron\Scheduler;
 use ChrxRentalManager\Data\Migrator;
+use ChrxRentalManager\Portal\PortalReceiptDownload;
+use ChrxRentalManager\Portal\PortalShortcode;
 use ChrxRentalManager\Roles\RoleManager;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -66,11 +68,8 @@ final class Plugin {
 		( new Menu() )->register();
 		$this->scheduler->register();
 
-		// Placeholder for [rental_portal] — the full tenant portal is
-		// built in the Tenant Self-Service Portal phase; this just avoids
-		// a bare, unrendered shortcode tag on the auto-created portal page
-		// in the meantime (Redirector already sends tenants here on login).
-		add_shortcode( 'rental_portal', array( $this, 'render_portal_placeholder' ) );
+		( new PortalShortcode() )->register();
+		( new PortalReceiptDownload() )->register();
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_end_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
@@ -89,14 +88,6 @@ final class Plugin {
 		return $this->role_manager;
 	}
 
-	public function render_portal_placeholder(): string {
-		if ( ! is_user_logged_in() ) {
-			return '<p>' . esc_html__( 'Please log in to view your tenant portal.', 'chrx-rental-manager' ) . '</p>';
-		}
-
-		return '<p>' . esc_html__( 'Your tenant portal is being set up. Please check back soon.', 'chrx-rental-manager' ) . '</p>';
-	}
-
 	public function enqueue_front_end_assets(): void {
 		if ( ! is_page() ) {
 			return;
@@ -108,8 +99,13 @@ final class Plugin {
 			return;
 		}
 
+		$content = (string) $post->post_content;
+
+		if ( has_shortcode( $content, 'rental_portal' ) ) {
+			wp_enqueue_style( 'chrx-rm-portal', PLUGIN_URL . 'assets/css/portal.css', array(), VERSION );
+		}
+
 		$auth_shortcodes = array( 'rental_login', 'rental_forgot_password', 'rental_reset_password', 'rental_portal_activate' );
-		$content         = (string) $post->post_content;
 		$has_auth_form   = false;
 
 		foreach ( $auth_shortcodes as $shortcode ) {
@@ -119,11 +115,9 @@ final class Plugin {
 			}
 		}
 
-		if ( ! $has_auth_form ) {
-			return;
+		if ( $has_auth_form ) {
+			wp_enqueue_style( 'chrx-rm-auth', PLUGIN_URL . 'assets/css/auth.css', array(), VERSION );
 		}
-
-		wp_enqueue_style( 'chrx-rm-auth', PLUGIN_URL . 'assets/css/auth.css', array(), VERSION );
 	}
 
 	public function enqueue_admin_assets( string $hook_suffix ): void {
