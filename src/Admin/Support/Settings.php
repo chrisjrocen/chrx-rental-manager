@@ -27,6 +27,7 @@ final class Settings {
 	public const OPT_COMPANY_NAME           = 'chrx_rm_company_name';
 	public const OPT_COMPANY_ADDRESS        = 'chrx_rm_company_address';
 	public const OPT_COMPANY_PHONE          = 'chrx_rm_company_phone';
+	public const OPT_MANAGEMENT_FEE_PERCENT = 'chrx_rm_management_fee_percent';
 
 	public const LATE_FEE_TYPE_FLAT    = 'flat';
 	public const LATE_FEE_TYPE_PERCENT = 'percent';
@@ -117,5 +118,17 @@ final class Settings {
 
 	public static function company_phone(): string {
 		return (string) get_option( self::OPT_COMPANY_PHONE, '' );
+	}
+
+	/**
+	 * Account-wide management fee deducted on the landlord statement PDF
+	 * (designs/22-landlord-statement-generator.html) — not mentioned by
+	 * SPEC.md's module spec directly, but a normal real-world need for a
+	 * management company's owner statements and doesn't conflict with
+	 * anything SPEC.md does specify, so it's added here the same way
+	 * every other billing constant is (admin-configurable, sane default).
+	 */
+	public static function management_fee_percent(): float {
+		return (float) get_option( self::OPT_MANAGEMENT_FEE_PERCENT, 10.0 );
 	}
 }

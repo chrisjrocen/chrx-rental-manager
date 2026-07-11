@@ -63,6 +63,7 @@ final class SettingsController {
 		$company_name           = Settings::company_name();
 		$company_address        = Settings::company_address();
 		$company_phone          = Settings::company_phone();
+		$management_fee_percent = Settings::management_fee_percent();
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/settings.php';
 	}
@@ -92,10 +93,12 @@ final class SettingsController {
 		$company_address = isset( $_POST['rm_company_address'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_company_address'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$company_phone = isset( $_POST['rm_company_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_company_phone'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$management_fee_percent = isset( $_POST['rm_management_fee_percent'] ) ? (float) str_replace( ',', '', sanitize_text_field( wp_unslash( $_POST['rm_management_fee_percent'] ) ) ) : 10.0;
 
 		$back_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
 
-		if ( $charge_lead_days < 0 || $late_fee_grace_days < 0 || $late_fee_amount < 0 || array() === $thresholds_raw ) {
+		if ( $charge_lead_days < 0 || $late_fee_grace_days < 0 || $late_fee_amount < 0 || $management_fee_percent < 0 || array() === $thresholds_raw ) {
 			FlashNotice::set( 'settings', __( 'Please provide valid, non-negative values and at least one reminder threshold.', 'chrx-rental-manager' ) );
 			wp_safe_redirect( $back_url );
 			exit;
@@ -118,6 +121,7 @@ final class SettingsController {
 		update_option( Settings::OPT_COMPANY_NAME, $company_name );
 		update_option( Settings::OPT_COMPANY_ADDRESS, $company_address );
 		update_option( Settings::OPT_COMPANY_PHONE, $company_phone );
+		update_option( Settings::OPT_MANAGEMENT_FEE_PERCENT, $management_fee_percent );
 
 		FlashNotice::set( 'settings', __( 'Settings saved.', 'chrx-rental-manager' ) );
 		wp_safe_redirect( $back_url );

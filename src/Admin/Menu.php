@@ -11,9 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Top-level "Rental Manager" wp-admin menu. Dashboard is a placeholder
- * until the Landlord Dashboard & Reporting phase; Reports submenu is
- * added in that later phase.
+ * Top-level "Rental Manager" wp-admin menu.
  */
 final class Menu {
 
@@ -24,6 +22,9 @@ final class Menu {
 	private LeasesController $leases_controller;
 	private DocumentsController $documents_controller;
 	private PaymentsController $payments_controller;
+	private DashboardController $dashboard_controller;
+	private ReportsController $reports_controller;
+	private StatementsController $statements_controller;
 	private SettingsController $settings_controller;
 
 	public function __construct(
@@ -34,6 +35,9 @@ final class Menu {
 		?LeasesController $leases_controller = null,
 		?DocumentsController $documents_controller = null,
 		?PaymentsController $payments_controller = null,
+		?DashboardController $dashboard_controller = null,
+		?ReportsController $reports_controller = null,
+		?StatementsController $statements_controller = null,
 		?SettingsController $settings_controller = null
 	) {
 		$this->staff_roles_controller = $staff_roles_controller ?? new StaffRolesController();
@@ -43,6 +47,9 @@ final class Menu {
 		$this->leases_controller      = $leases_controller ?? new LeasesController();
 		$this->documents_controller   = $documents_controller ?? new DocumentsController();
 		$this->payments_controller    = $payments_controller ?? new PaymentsController();
+		$this->dashboard_controller   = $dashboard_controller ?? new DashboardController();
+		$this->reports_controller     = $reports_controller ?? new ReportsController();
+		$this->statements_controller  = $statements_controller ?? new StatementsController();
 		$this->settings_controller    = $settings_controller ?? new SettingsController();
 	}
 
@@ -55,6 +62,8 @@ final class Menu {
 		$this->leases_controller->register();
 		$this->documents_controller->register();
 		$this->payments_controller->register();
+		$this->reports_controller->register();
+		$this->statements_controller->register();
 		$this->settings_controller->register();
 	}
 
@@ -64,7 +73,7 @@ final class Menu {
 			__( 'Rental Manager', 'chrx-rental-manager' ),
 			RoleManager::CAP_VIEW_DASHBOARD,
 			'chrx-rental-manager',
-			array( $this, 'render_dashboard_placeholder' ),
+			array( $this->dashboard_controller, 'render' ),
 			'dashicons-building',
 			25
 		);
@@ -75,7 +84,7 @@ final class Menu {
 			__( 'Dashboard', 'chrx-rental-manager' ),
 			RoleManager::CAP_VIEW_DASHBOARD,
 			'chrx-rental-manager',
-			array( $this, 'render_dashboard_placeholder' )
+			array( $this->dashboard_controller, 'render' )
 		);
 
 		add_submenu_page(
@@ -125,6 +134,24 @@ final class Menu {
 
 		add_submenu_page(
 			'chrx-rental-manager',
+			__( 'Reports', 'chrx-rental-manager' ),
+			__( 'Reports', 'chrx-rental-manager' ),
+			RoleManager::CAP_MANAGE_PROPERTIES,
+			ReportsController::page_slug(),
+			array( $this->reports_controller, 'render' )
+		);
+
+		add_submenu_page(
+			'chrx-rental-manager',
+			__( 'Statements', 'chrx-rental-manager' ),
+			__( 'Statements', 'chrx-rental-manager' ),
+			RoleManager::CAP_VIEW_DASHBOARD,
+			StatementsController::page_slug(),
+			array( $this->statements_controller, 'render' )
+		);
+
+		add_submenu_page(
+			'chrx-rental-manager',
 			__( 'Staff & Roles', 'chrx-rental-manager' ),
 			__( 'Staff & Roles', 'chrx-rental-manager' ),
 			RoleManager::CAP_MANAGE_STAFF,
@@ -140,10 +167,5 @@ final class Menu {
 			SettingsController::page_slug(),
 			array( $this->settings_controller, 'render' )
 		);
-	}
-
-	public function render_dashboard_placeholder(): void {
-		echo '<div class="wrap"><h1>' . esc_html__( 'Rental Manager', 'chrx-rental-manager' ) . '</h1>';
-		echo '<p>' . esc_html__( 'The dashboard is built in a later phase.', 'chrx-rental-manager' ) . '</p></div>';
 	}
 }

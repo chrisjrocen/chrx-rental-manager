@@ -5,7 +5,7 @@
  * $reminder_notify_tenant (bool), $late_fee_grace_days (int),
  * $late_fee_amount (float), $late_fee_type (string), $currency_symbol (string),
  * $currency_format (string), $company_name (string), $company_address (string),
- * $company_phone (string), $notice (?string).
+ * $company_phone (string), $management_fee_percent (float), $notice (?string).
  *
  * @package ChrxRentalManager
  */
@@ -119,6 +119,17 @@ $available_thresholds = array( 30, 14, 7, 3 );
 						<td><input type="text" id="rm_company_phone" name="rm_company_phone" value="<?php echo esc_attr( $company_phone ); ?>" style="width:100%;max-width:360px;"></td>
 					</tr>
 				</table>
+			</div>
+		</div>
+
+		<div class="chrx-rm-panel">
+			<div class="chrx-rm-panel__body">
+				<div style="font-weight:700;font-size:15px;margin-bottom:4px;"><?php esc_html_e( 'Landlord statements', 'chrx-rental-manager' ); ?></div>
+				<div style="font-size:13px;color:#646970;margin-bottom:16px;"><?php esc_html_e( 'Deducted from gross collected on every owner statement PDF.', 'chrx-rental-manager' ); ?></div>
+				<p class="description">
+					<label for="rm_management_fee_percent"><?php esc_html_e( 'Management fee (%)', 'chrx-rental-manager' ); ?></label>
+					<input type="text" id="rm_management_fee_percent" name="rm_management_fee_percent" value="<?php echo esc_attr( (string) $management_fee_percent ); ?>" style="width:70px;">
+				</p>
 			</div>
 		</div>
 
