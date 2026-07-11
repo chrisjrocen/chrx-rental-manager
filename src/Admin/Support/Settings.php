@@ -1,0 +1,99 @@
+<?php
+
+declare( strict_types = 1 );
+
+namespace ChrxRentalManager\Admin\Support;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Centralizes the account-wide settings the Billing phase's cron jobs
+ * consume (designs/24-notifications-reminders-settings.html) — one
+ * source of truth for option names/defaults so the cron classes, the
+ * settings screen, and Money don't each hardcode them separately.
+ */
+final class Settings {
+
+	public const OPT_CHARGE_LEAD_DAYS       = 'chrx_rm_charge_lead_days';
+	public const OPT_REMINDER_THRESHOLDS    = 'chrx_rm_reminder_thresholds';
+	public const OPT_REMINDER_NOTIFY_TENANT = 'chrx_rm_reminder_notify_tenant';
+	public const OPT_LATE_FEE_GRACE_DAYS    = 'chrx_rm_late_fee_grace_days';
+	public const OPT_LATE_FEE_AMOUNT        = 'chrx_rm_late_fee_amount';
+	public const OPT_LATE_FEE_TYPE          = 'chrx_rm_late_fee_type';
+	public const OPT_CURRENCY_SYMBOL        = 'chrx_rm_currency_symbol';
+	public const OPT_CURRENCY_FORMAT        = 'chrx_rm_currency_format';
+
+	public const LATE_FEE_TYPE_FLAT    = 'flat';
+	public const LATE_FEE_TYPE_PERCENT = 'percent';
+
+	public const CURRENCY_FORMAT_SYMBOL_FIRST = 'symbol_first';
+	public const CURRENCY_FORMAT_SYMBOL_LAST  = 'symbol_last';
+
+	public static function charge_lead_days(): int {
+		return (int) get_option( self::OPT_CHARGE_LEAD_DAYS, 5 );
+	}
+
+	/**
+	 * @return array<int,int>
+	 */
+	public static function reminder_thresholds(): array {
+		$value = get_option( self::OPT_REMINDER_THRESHOLDS, array( 30, 14, 7 ) );
+
+		if ( ! is_array( $value ) || array() === $value ) {
+			return array( 30, 14, 7 );
+		}
+
+		$thresholds = array_map( 'intval', $value );
+		rsort( $thresholds );
+
+		return $thresholds;
+	}
+
+	public static function reminder_notify_tenant(): bool {
+		return (bool) get_option( self::OPT_REMINDER_NOTIFY_TENANT, false );
+	}
+
+	public static function late_fee_grace_days(): int {
+		return (int) get_option( self::OPT_LATE_FEE_GRACE_DAYS, 5 );
+	}
+
+	public static function late_fee_amount(): float {
+		return (float) get_option( self::OPT_LATE_FEE_AMOUNT, 50.0 );
+	}
+
+	public static function late_fee_type(): string {
+		$type = get_option( self::OPT_LATE_FEE_TYPE, self::LATE_FEE_TYPE_FLAT );
+
+		return in_array( $type, array( self::LATE_FEE_TYPE_FLAT, self::LATE_FEE_TYPE_PERCENT ), true )
+			? $type
+			: self::LATE_FEE_TYPE_FLAT;
+	}
+
+	/**
+	 * Computes the late fee amount for a given rent amount, respecting
+	 * the flat-vs-percent setting (SPEC.md §4.3).
+	 */
+	public static function calculate_late_fee( float $rent_amount ): float {
+		if ( self::LATE_FEE_TYPE_PERCENT === self::late_fee_type() ) {
+			return round( $rent_amount * ( self::late_fee_amount() / 100 ), 2 );
+		}
+
+		return self::late_fee_amount();
+	}
+
+	public static function currency_symbol(): string {
+		$symbol = get_option( self::OPT_CURRENCY_SYMBOL, 'GH₵' );
+
+		return '' !== $symbol ? $symbol : 'GH₵';
+	}
+
+	public static function currency_format(): string {
+		$format = get_option( self::OPT_CURRENCY_FORMAT, self::CURRENCY_FORMAT_SYMBOL_FIRST );
+
+		return in_array( $format, array( self::CURRENCY_FORMAT_SYMBOL_FIRST, self::CURRENCY_FORMAT_SYMBOL_LAST ), true )
+			? $format
+			: self::CURRENCY_FORMAT_SYMBOL_FIRST;
+	}
+}

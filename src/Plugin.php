@@ -12,6 +12,7 @@ use ChrxRentalManager\Auth\Pages;
 use ChrxRentalManager\Auth\PortalActivateForm;
 use ChrxRentalManager\Auth\Redirector;
 use ChrxRentalManager\Auth\ResetPasswordForm;
+use ChrxRentalManager\Cron\Scheduler;
 use ChrxRentalManager\Data\Migrator;
 use ChrxRentalManager\Roles\RoleManager;
 
@@ -29,6 +30,7 @@ final class Plugin {
 
 	private RoleManager $role_manager;
 	private Pages $pages;
+	private Scheduler $scheduler;
 
 	public static function instance(): Plugin {
 		if ( null === self::$instance ) {
@@ -41,6 +43,7 @@ final class Plugin {
 	private function __construct() {
 		$this->role_manager = new RoleManager();
 		$this->pages        = new Pages();
+		$this->scheduler    = new Scheduler();
 	}
 
 	public function init(): void {
@@ -61,6 +64,7 @@ final class Plugin {
 		( new PortalActivateForm() )->register();
 		( new TenantInviteController() )->register();
 		( new Menu() )->register();
+		$this->scheduler->register();
 
 		// Placeholder for [rental_portal] — the full tenant portal is
 		// built in the Tenant Self-Service Portal phase; this just avoids
@@ -78,6 +82,7 @@ final class Plugin {
 		// Idempotent — safe to run on every admin_init.
 		$this->role_manager->register_roles();
 		$this->pages->ensure_pages_exist();
+		$this->scheduler->schedule_events();
 	}
 
 	public function role_manager(): RoleManager {

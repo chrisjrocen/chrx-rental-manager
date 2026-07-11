@@ -136,6 +136,19 @@ final class Lease extends AbstractRepository {
 	}
 
 	/**
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function all_with_status( string $status ): array {
+		$table = $this->table_name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only.
+		return $this->results(
+			"SELECT * FROM {$table} WHERE status = %s AND deleted_at IS NULL ORDER BY end_date ASC",
+			array( $status )
+		);
+	}
+
+	/**
 	 * Leases expiring within $days_ahead, still active — used by the
 	 * renewal reminder cron (Billing phase) and the dashboard's "upcoming
 	 * expirations" widget.

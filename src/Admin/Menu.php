@@ -23,6 +23,7 @@ final class Menu {
 	private TenantsController $tenants_controller;
 	private LeasesController $leases_controller;
 	private DocumentsController $documents_controller;
+	private SettingsController $settings_controller;
 
 	public function __construct(
 		?StaffRolesController $staff_roles_controller = null,
@@ -30,7 +31,8 @@ final class Menu {
 		?UnitsController $units_controller = null,
 		?TenantsController $tenants_controller = null,
 		?LeasesController $leases_controller = null,
-		?DocumentsController $documents_controller = null
+		?DocumentsController $documents_controller = null,
+		?SettingsController $settings_controller = null
 	) {
 		$this->staff_roles_controller = $staff_roles_controller ?? new StaffRolesController();
 		$this->properties_controller  = $properties_controller ?? new PropertiesController();
@@ -38,6 +40,7 @@ final class Menu {
 		$this->tenants_controller     = $tenants_controller ?? new TenantsController();
 		$this->leases_controller      = $leases_controller ?? new LeasesController();
 		$this->documents_controller   = $documents_controller ?? new DocumentsController();
+		$this->settings_controller    = $settings_controller ?? new SettingsController();
 	}
 
 	public function register(): void {
@@ -48,6 +51,7 @@ final class Menu {
 		$this->tenants_controller->register();
 		$this->leases_controller->register();
 		$this->documents_controller->register();
+		$this->settings_controller->register();
 	}
 
 	public function add_menu_pages(): void {
@@ -113,6 +117,15 @@ final class Menu {
 			RoleManager::CAP_MANAGE_STAFF,
 			'chrx-rm-staff-roles',
 			array( $this->staff_roles_controller, 'render' )
+		);
+
+		add_submenu_page(
+			'chrx-rental-manager',
+			__( 'Settings', 'chrx-rental-manager' ),
+			__( 'Settings', 'chrx-rental-manager' ),
+			RoleManager::CAP_MANAGE_SETTINGS,
+			SettingsController::page_slug(),
+			array( $this->settings_controller, 'render' )
 		);
 	}
 

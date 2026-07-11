@@ -54,7 +54,15 @@ final class Charge extends AbstractRepository {
 
 	/**
 	 * Overdue charges past their grace period — used by the late-fee cron
-	 * (Billing phase).
+	 * (Billing phase). Compares against today's date (WP site timezone,
+	 * date-only), not a full datetime: period_due_date has no time
+	 * component (always midnight), so comparing
+	 * DATE_ADD(period_due_date, INTERVAL grace_days DAY) against
+	 * current_time('mysql') (today's actual clock time) would make a
+	 * charge exactly at the grace-period boundary look overdue the moment
+	 * any time at all has passed since midnight — a real off-by-time-of-day
+	 * bug caught by LateFeeApplierTest's boundary case. A charge is only
+	 * truly overdue once the day after the grace period ends.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -64,7 +72,7 @@ final class Charge extends AbstractRepository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only.
 		return $this->results(
 			"SELECT * FROM {$table} WHERE status IN ('unpaid','partial') AND DATE_ADD(period_due_date, INTERVAL %d DAY) < %s",
-			array( $grace_days, current_time( 'mysql' ) )
+			array( $grace_days, current_time( 'Y-m-d' ) )
 		);
 	}
 

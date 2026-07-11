@@ -117,6 +117,7 @@ function on_activate(): void {
 
 	( new Roles\RoleManager() )->register_roles();
 	( new Auth\Pages() )->ensure_pages_exist();
+	( new Cron\Scheduler() )->schedule_events();
 
 	flush_rewrite_rules();
 }
@@ -125,9 +126,12 @@ function on_activate(): void {
  * Deactivation intentionally leaves all data intact: roles remain
  * registered and no tables/options are removed. Destructive cleanup is a
  * separate, deliberate decision that belongs in an uninstall.php (not
- * implied by deactivation) — not added in this phase.
+ * implied by deactivation) — not added in this phase. Scheduled cron
+ * events are process-level, not data, so they ARE cleared here.
  */
 function on_deactivate(): void {
+	( new Cron\Scheduler() )->unschedule_events();
+
 	flush_rewrite_rules();
 }
 

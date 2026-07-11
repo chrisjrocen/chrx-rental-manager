@@ -2,10 +2,9 @@
 /**
  * Lease detail — charge ledger (designs/15-lease-detail-charge-ledger.html).
  *
- * "Renew lease" and "Record Payment" are shown per the design but disabled
- * here — they belong to the Billing (renewal) and Payments & Receipts
- * phases respectively, not this one, and wiring them now would mean
- * rebuilding them against a different data flow once those phases land.
+ * "Renew lease" and "Move-out" (designs/17, /23) are live, built in the
+ * Billing phase. "Record Payment" is still shown disabled — it belongs
+ * to the Payments & Receipts phase, not this one.
  *
  * Variables in scope: $lease (array), $unit (?array), $tenant (?array),
  * $property (?array), $charges (array<int,array> with 'paid' added),
@@ -19,6 +18,7 @@ use ChrxRentalManager\Admin\Support\Badge;
 use ChrxRentalManager\Admin\Support\Money;
 use ChrxRentalManager\Data\Charge;
 use ChrxRentalManager\Data\Document;
+use ChrxRentalManager\Data\Lease;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -66,7 +66,36 @@ $deposit_badge_key = 'paid' === $lease['deposit_status'] ? 'paid' : 'unpaid';
 			<?php echo wp_kses_post( Badge::render( $lease['status'] ) ); ?>
 		</div>
 		<div class="chrx-rm-detail-header__actions">
-			<button type="button" class="button" disabled title="<?php esc_attr_e( 'Available in a later phase', 'chrx-rental-manager' ); ?>"><?php esc_html_e( 'Renew lease', 'chrx-rental-manager' ); ?></button>
+			<?php if ( $can_manage && Lease::STATUS_ACTIVE === $lease['status'] ) : ?>
+				<a href="
+				<?php
+				echo esc_url(
+					add_query_arg(
+						array(
+							'page'   => 'chrx-rm-leases',
+							'action' => 'renew',
+							'id'     => $lease['id'],
+						),
+						admin_url( 'admin.php' )
+					)
+				);
+				?>
+							" class="button"><?php esc_html_e( 'Renew lease', 'chrx-rental-manager' ); ?></a>
+				<a href="
+				<?php
+				echo esc_url(
+					add_query_arg(
+						array(
+							'page'   => 'chrx-rm-leases',
+							'action' => 'move-out',
+							'id'     => $lease['id'],
+						),
+						admin_url( 'admin.php' )
+					)
+				);
+				?>
+							" class="button"><?php esc_html_e( 'Move-out', 'chrx-rental-manager' ); ?></a>
+			<?php endif; ?>
 			<button type="button" class="button button-primary" disabled title="<?php esc_attr_e( 'Available in a later phase', 'chrx-rental-manager' ); ?>"><?php esc_html_e( 'Record Payment', 'chrx-rental-manager' ); ?></button>
 			<?php if ( $can_manage ) : ?>
 				<?php

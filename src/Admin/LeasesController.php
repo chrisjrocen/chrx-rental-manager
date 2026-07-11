@@ -48,6 +48,8 @@ final class LeasesController {
 	private Document $documents;
 	private Ledger $ledger;
 	private Access $access;
+	private LeaseRenewalController $renewal_controller;
+	private LeaseMoveOutController $move_out_controller;
 
 	public function __construct(
 		?Lease $leases = null,
@@ -58,7 +60,9 @@ final class LeasesController {
 		?Payment $payments = null,
 		?Document $documents = null,
 		?Ledger $ledger = null,
-		?Access $access = null
+		?Access $access = null,
+		?LeaseRenewalController $renewal_controller = null,
+		?LeaseMoveOutController $move_out_controller = null
 	) {
 		$this->units      = $units ?? new Unit();
 		$this->leases     = $leases ?? new Lease( $this->units );
@@ -69,10 +73,15 @@ final class LeasesController {
 		$this->documents  = $documents ?? new Document();
 		$this->ledger     = $ledger ?? new Ledger( $this->charges, $this->payments, $this->leases );
 		$this->access     = $access ?? new Access();
+
+		$this->renewal_controller  = $renewal_controller ?? new LeaseRenewalController( $this->leases, $this->units, $this->tenants, $this->access );
+		$this->move_out_controller = $move_out_controller ?? new LeaseMoveOutController( $this->leases, $this->units, $this->tenants, $this->charges, $this->ledger, $this->access );
 	}
 
 	public function register(): void {
 		add_action( 'admin_init', array( $this, 'maybe_handle_action' ) );
+		$this->renewal_controller->register();
+		$this->move_out_controller->register();
 	}
 
 	public function maybe_handle_action(): void {
@@ -123,6 +132,18 @@ final class LeasesController {
 			}
 
 			$this->render_form( $action, $lease_id, $notice );
+
+			return;
+		}
+
+		if ( 'renew' === $action ) {
+			$this->renewal_controller->render_form( $lease_id, $notice );
+
+			return;
+		}
+
+		if ( 'move-out' === $action ) {
+			$this->move_out_controller->render_form( $lease_id, $notice );
 
 			return;
 		}

@@ -226,7 +226,7 @@ final class SeedCommand {
 	private function wipe(): void {
 		global $wpdb;
 
-		foreach ( array( 'rm_payments', 'rm_charges', 'rm_leases', 'rm_tenants', 'rm_units', 'rm_properties' ) as $table ) {
+		foreach ( array( 'rm_payments', 'rm_charges', 'rm_leases', 'rm_tenants', 'rm_units', 'rm_properties', 'rm_notifications_log' ) as $table ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only, fixed list above, dev-only command.
 			$wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}{$table}" );
 		}
