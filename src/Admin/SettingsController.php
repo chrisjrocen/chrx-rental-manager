@@ -52,18 +52,19 @@ final class SettingsController {
 
 		$notice = FlashNotice::take( 'settings' );
 
-		$charge_lead_days       = Settings::charge_lead_days();
-		$reminder_thresholds    = Settings::reminder_thresholds();
-		$reminder_notify_tenant = Settings::reminder_notify_tenant();
-		$late_fee_grace_days    = Settings::late_fee_grace_days();
-		$late_fee_amount        = Settings::late_fee_amount();
-		$late_fee_type          = Settings::late_fee_type();
-		$currency_symbol        = Settings::currency_symbol();
-		$currency_format        = Settings::currency_format();
-		$company_name           = Settings::company_name();
-		$company_address        = Settings::company_address();
-		$company_phone          = Settings::company_phone();
-		$management_fee_percent = Settings::management_fee_percent();
+		$charge_lead_days         = Settings::charge_lead_days();
+		$reminder_thresholds      = Settings::reminder_thresholds();
+		$reminder_notify_tenant   = Settings::reminder_notify_tenant();
+		$late_fee_grace_days      = Settings::late_fee_grace_days();
+		$late_fee_amount          = Settings::late_fee_amount();
+		$late_fee_type            = Settings::late_fee_type();
+		$currency_symbol          = Settings::currency_symbol();
+		$currency_format          = Settings::currency_format();
+		$company_name             = Settings::company_name();
+		$company_address          = Settings::company_address();
+		$company_phone            = Settings::company_phone();
+		$management_fee_percent   = Settings::management_fee_percent();
+		$hide_other_menus_enabled = Settings::hide_other_menus_enabled();
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/settings.php';
 	}
@@ -95,6 +96,8 @@ final class SettingsController {
 		$company_phone = isset( $_POST['rm_company_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_company_phone'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$management_fee_percent = isset( $_POST['rm_management_fee_percent'] ) ? (float) str_replace( ',', '', sanitize_text_field( wp_unslash( $_POST['rm_management_fee_percent'] ) ) ) : 10.0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$hide_other_menus = ! empty( $_POST['rm_hide_other_menus'] );
 
 		$back_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
 
@@ -122,6 +125,7 @@ final class SettingsController {
 		update_option( Settings::OPT_COMPANY_ADDRESS, $company_address );
 		update_option( Settings::OPT_COMPANY_PHONE, $company_phone );
 		update_option( Settings::OPT_MANAGEMENT_FEE_PERCENT, $management_fee_percent );
+		update_option( Settings::OPT_HIDE_OTHER_MENUS, $hide_other_menus );
 
 		FlashNotice::set( 'settings', __( 'Settings saved.', 'chrx-rental-manager' ) );
 		wp_safe_redirect( $back_url );

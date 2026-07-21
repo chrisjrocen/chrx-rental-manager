@@ -151,4 +151,32 @@ final class LedgerTest extends IntegrationTestCase {
 
 		$this->assertSame( 0.0, $this->ledger->outstanding_balance_for_lease( $this->lease_id ) );
 	}
+
+	public function test_voided_payment_is_excluded_from_balance(): void {
+		$charge_id = $this->charges->insert( [
+			'lease_id'        => $this->lease_id,
+			'period_start'    => '2026-01-01',
+			'period_due_date' => '2026-01-01',
+			'amount_due'      => 1000,
+			'type'            => Charge::TYPE_RENT,
+			'status'          => Charge::STATUS_PAID,
+		] );
+
+		$payment_id = $this->payments->insert( [
+			'lease_id'    => $this->lease_id,
+			'charge_id'   => $charge_id,
+			'amount'      => 1000,
+			'method'      => Payment::METHOD_CASH,
+			'recorded_by' => 1,
+			'paid_at'     => current_time( 'mysql' ),
+		] );
+
+		$this->assertSame( 0.0, $this->ledger->outstanding_balance_for_lease( $this->lease_id ) );
+		$this->assertSame( 1000.0, $this->ledger->paid_to_date_for_lease( $this->lease_id ) );
+
+		$this->payments->void( $payment_id, 'recorded in error', 1 );
+
+		$this->assertSame( 1000.0, $this->ledger->outstanding_balance_for_lease( $this->lease_id ) );
+		$this->assertSame( 0.0, $this->ledger->paid_to_date_for_lease( $this->lease_id ) );
+	}
 }

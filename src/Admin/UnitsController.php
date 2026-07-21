@@ -78,16 +78,23 @@ final class UnitsController {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
 		if ( isset( $_GET['rm_action'] ) && 'archive' === $_GET['rm_action'] ) {
-			$this->handle_archive_action();
+			$this->handle_trash_action();
 
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
 		if ( isset( $_GET['rm_action'] ) && 'restore' === $_GET['rm_action'] ) {
 			$this->handle_restore_action();
+
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
+		if ( isset( $_GET['rm_action'] ) && 'delete_permanently' === $_GET['rm_action'] ) {
+			$this->handle_delete_permanently_action();
 		}
 	}
 
@@ -160,9 +167,10 @@ final class UnitsController {
 			wp_die( esc_html__( 'You do not have permission to manage units.', 'chrx-rental-manager' ), 403 );
 		}
 
-		$archived   = $this->units->all_archived();
-		$properties = $this->properties;
-		$list_url   = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$archived               = $this->units->all_archived();
+		$properties             = $this->properties;
+		$list_url               = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$can_delete_permanently = $this->access->is_administrator( get_current_user_id() );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/units-archived.php';
 	}
@@ -297,11 +305,11 @@ final class UnitsController {
 		exit;
 	}
 
-	private function handle_archive_action(): void {
+	private function handle_trash_action(): void {
 		check_admin_referer( 'rm_unit_archive' );
 
 		if ( ! current_user_can( RoleManager::CAP_MANAGE_UNITS ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive units.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete units.', 'chrx-rental-manager' ), 403 );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
@@ -309,13 +317,13 @@ final class UnitsController {
 		$unit    = $this->units->find( $unit_id );
 
 		if ( null === $unit || ! $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive this unit.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete this unit.', 'chrx-rental-manager' ), 403 );
 		}
 
 		// SPEC.md §4.1: deleting a unit with lease history is blocked —
-		// archive instead so history stays queryable in reports.
+		// trash it instead so history stays queryable in reports.
 		if ( Unit::STATUS_OCCUPIED === $unit['status'] || null !== $this->leases->active_lease_for_unit( $unit_id ) ) {
-			FlashNotice::set( 'units', __( 'This unit has an active lease. End the lease before archiving the unit.', 'chrx-rental-manager' ) );
+			FlashNotice::set( 'units', __( 'This unit has an active lease. End the lease before deleting the unit.', 'chrx-rental-manager' ) );
 			wp_safe_redirect(
 				add_query_arg(
 					array(
@@ -330,7 +338,7 @@ final class UnitsController {
 
 		$this->units->soft_delete( $unit_id );
 
-		FlashNotice::set( 'units', __( 'Unit archived.', 'chrx-rental-manager' ) );
+		FlashNotice::set( 'units', __( 'Unit moved to trash.', 'chrx-rental-manager' ) );
 		wp_safe_redirect( add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) ) );
 		exit;
 	}
@@ -357,6 +365,46 @@ final class UnitsController {
 				admin_url( 'admin.php' )
 			)
 		);
+		exit;
+	}
+
+	private function handle_delete_permanently_action(): void {
+		check_admin_referer( 'rm_unit_delete_permanently' );
+
+		if ( ! $this->access->is_administrator( get_current_user_id() ) ) {
+			wp_die( esc_html__( 'You do not have permission to permanently delete units.', 'chrx-rental-manager' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$unit_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+		$unit    = $this->units->find( $unit_id );
+
+		if ( null === $unit ) {
+			wp_die( esc_html__( 'Unit not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$archived_url = add_query_arg(
+			array(
+				'page'   => self::PAGE_SLUG,
+				'action' => 'archived',
+			),
+			admin_url( 'admin.php' )
+		);
+
+		if ( null === $unit['deleted_at'] ) {
+			wp_die( esc_html__( 'This unit must be moved to trash before it can be permanently deleted.', 'chrx-rental-manager' ), 400 );
+		}
+
+		if ( $this->units->has_lease_history( $unit_id ) ) {
+			FlashNotice::set( 'units', __( 'This unit has lease history and cannot be permanently deleted. It will remain in the trash.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( $archived_url );
+			exit;
+		}
+
+		$this->units->delete_permanently( $unit_id );
+
+		FlashNotice::set( 'units', __( 'Unit permanently deleted.', 'chrx-rental-manager' ) );
+		wp_safe_redirect( $archived_url );
 		exit;
 	}
 

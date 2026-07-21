@@ -124,6 +124,10 @@ final class PaymentAllocator {
 				break;
 			}
 
+			if ( Payment::STATUS_VOIDED === $credit['status'] ) {
+				continue;
+			}
+
 			$credit_amount = (float) $credit['amount'];
 			$applied       = min( $credit_amount, $remaining_need );
 
@@ -148,7 +152,13 @@ final class PaymentAllocator {
 		$this->sync_charge_status( $charge_id );
 	}
 
-	private function sync_charge_status( int $charge_id ): void {
+	/**
+	 * Public so callers correcting a payment after the fact (e.g.
+	 * PaymentsController::handle_void_payment()) can recompute a charge's
+	 * paid/partial/unpaid status from the ledger without duplicating this
+	 * threshold logic.
+	 */
+	public function sync_charge_status( int $charge_id ): void {
 		$charge = $this->charges->find( $charge_id );
 
 		if ( null === $charge || Charge::STATUS_WAIVED === $charge['status'] ) {

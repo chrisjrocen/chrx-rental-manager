@@ -153,6 +153,10 @@ final class StatementPdf {
 
 			foreach ( $this->leases->for_unit( (int) $unit['id'] ) as $lease ) {
 				foreach ( $this->payments->for_lease( (int) $lease['id'] ) as $payment ) {
+					if ( Payment::STATUS_VOIDED === $payment['status'] ) {
+						continue;
+					}
+
 					$paid_date = gmdate( 'Y-m-d', strtotime( $payment['paid_at'] ) );
 
 					if ( $paid_date >= $from && $paid_date <= $to ) {

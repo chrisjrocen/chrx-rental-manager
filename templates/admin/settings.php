@@ -5,7 +5,8 @@
  * $reminder_notify_tenant (bool), $late_fee_grace_days (int),
  * $late_fee_amount (float), $late_fee_type (string), $currency_symbol (string),
  * $currency_format (string), $company_name (string), $company_address (string),
- * $company_phone (string), $management_fee_percent (float), $notice (?string).
+ * $company_phone (string), $management_fee_percent (float),
+ * $hide_other_menus_enabled (bool), $notice (?string).
  *
  * @package ChrxRentalManager
  */
@@ -130,6 +131,17 @@ $available_thresholds = array( 30, 14, 7, 3 );
 					<label for="rm_management_fee_percent"><?php esc_html_e( 'Management fee (%)', 'chrx-rental-manager' ); ?></label>
 					<input type="text" id="rm_management_fee_percent" name="rm_management_fee_percent" value="<?php echo esc_attr( (string) $management_fee_percent ); ?>" style="width:70px;">
 				</p>
+			</div>
+		</div>
+
+		<div class="chrx-rm-panel">
+			<div class="chrx-rm-panel__body">
+				<div style="font-weight:700;font-size:15px;margin-bottom:4px;"><?php esc_html_e( 'Admin menu', 'chrx-rental-manager' ); ?></div>
+				<div style="font-size:13px;color:#646970;margin-bottom:16px;"><?php esc_html_e( 'Administrators always see the full WP admin menu regardless of this setting.', 'chrx-rental-manager' ); ?></div>
+				<label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+					<input type="checkbox" name="rm_hide_other_menus" value="1" <?php checked( $hide_other_menus_enabled ); ?>>
+					<?php esc_html_e( 'Hide other WP admin menus for non-admin users (Staff, Landlord-Owner)', 'chrx-rental-manager' ); ?>
+				</label>
 			</div>
 		</div>
 

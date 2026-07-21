@@ -40,7 +40,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<div class="chrx-rm-list-toolbar">
 				<?php $list_table->search_box( __( 'Search properties…', 'chrx-rental-manager' ), 'rm-properties' ); ?>
 				<?php if ( $can_manage ) : ?>
-					<a href="<?php echo esc_url( $archived_url ); ?>" style="margin-left:auto;font-size:13px;"><?php esc_html_e( 'View archived', 'chrx-rental-manager' ); ?></a>
+					<a href="<?php echo esc_url( $archived_url ); ?>" style="margin-left:auto;font-size:13px;"><?php esc_html_e( 'View trash', 'chrx-rental-manager' ); ?></a>
 				<?php endif; ?>
 			</div>
 			<?php $list_table->display(); ?>

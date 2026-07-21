@@ -10,7 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Payments — append-only (SPEC.md §3). No delete of any kind is exposed;
- * corrections happen via a reversing/adjustment entry in a later phase.
+ * a mistaken payment is corrected via void() (status = 'voided'), never
+ * row removal — same pattern as Charge::mark_waived().
  */
 final class Payment extends AbstractRepository {
 
@@ -21,6 +22,9 @@ final class Payment extends AbstractRepository {
 	public const METHOD_MTN_MOMO      = 'mtn_momo';
 	public const METHOD_AIRTEL_MONEY  = 'airtel_money';
 	public const METHOD_OTHER         = 'other';
+
+	public const STATUS_RECORDED = 'recorded';
+	public const STATUS_VOIDED   = 'voided';
 
 	/**
 	 * @return array<int,array<string,mixed>>
@@ -83,5 +87,23 @@ final class Payment extends AbstractRepository {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only.
 		return $this->results( "SELECT * FROM {$table} ORDER BY paid_at DESC", array() );
+	}
+
+	/**
+	 * Never removed — marked voided instead (SPEC.md §3/§4.3), same
+	 * append-only pattern as Charge::mark_waived(). Excluded from balance
+	 * calculations by Ledger and related summation sites, but stays visible
+	 * in payment history/statements for audit purposes.
+	 */
+	public function void( int $payment_id, string $reason, int $voided_by ): bool {
+		return $this->update(
+			$payment_id,
+			array(
+				'status'        => self::STATUS_VOIDED,
+				'voided_reason' => $reason,
+				'voided_by'     => $voided_by,
+				'voided_at'     => current_time( 'mysql' ),
+			)
+		);
 	}
 }

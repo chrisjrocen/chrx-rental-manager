@@ -12,6 +12,7 @@
 use ChrxRentalManager\Admin\PaymentsListTable;
 use ChrxRentalManager\Admin\Support\Money;
 use ChrxRentalManager\Data\Charge;
+use ChrxRentalManager\Data\Payment;
 use ChrxRentalManager\Portal\PortalShortcode;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -52,6 +53,9 @@ $page_title    = __( 'Payment history', 'chrx-rental-manager' );
 								<?php echo esc_html( Money::format( (float) $payment['amount'] ) ); ?>
 								<?php if ( null !== $charge && Charge::STATUS_PARTIAL === $charge['status'] ) : ?>
 									<span class="chrx-rm-portal__pill chrx-rm-portal__pill--partial" style="margin-left:4px;padding:2px 8px;font-size:10px;"><?php esc_html_e( 'Partial', 'chrx-rental-manager' ); ?></span>
+								<?php endif; ?>
+								<?php if ( Payment::STATUS_VOIDED === $payment['status'] ) : ?>
+									<span class="chrx-rm-portal__pill" style="margin-left:4px;padding:2px 8px;font-size:10px;background:#f0f0f1;color:#646970;"><?php esc_html_e( 'Voided', 'chrx-rental-manager' ); ?></span>
 								<?php endif; ?>
 							</div>
 							<div class="chrx-rm-portal__payment-meta">

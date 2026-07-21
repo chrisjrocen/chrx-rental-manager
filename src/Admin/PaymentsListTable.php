@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Admin;
 
+use ChrxRentalManager\Admin\Support\Badge;
 use ChrxRentalManager\Admin\Support\Money;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\Payment;
@@ -63,7 +64,9 @@ final class PaymentsListTable extends \WP_List_Table {
 			'unit'    => __( 'Unit', 'chrx-rental-manager' ),
 			'method'  => __( 'Method', 'chrx-rental-manager' ),
 			'amount'  => __( 'Amount', 'chrx-rental-manager' ),
+			'status'  => __( 'Status', 'chrx-rental-manager' ),
 			'receipt' => __( 'Receipt', 'chrx-rental-manager' ),
+			'actions' => __( 'Actions', 'chrx-rental-manager' ),
 		);
 	}
 
@@ -80,7 +83,12 @@ final class PaymentsListTable extends \WP_List_Table {
 		$rows = self::apply_filters( $this->payments->all_ordered(), $this->leases, $this->units, $this->restrict_to_property_ids, $property_id, $method, $month );
 
 		$this->filtered_count = count( $rows );
-		$this->filtered_total = array_sum( array_map( static fn( array $r ): float => (float) $r['amount'], $rows ) );
+		$this->filtered_total = array_sum(
+			array_map(
+				static fn( array $r ): float => (float) $r['amount'],
+				array_filter( $rows, static fn( array $r ): bool => Payment::STATUS_VOIDED !== $r['status'] )
+			)
+		);
 
 		$per_page     = 20;
 		$current_page = $this->get_pagenum();
@@ -223,6 +231,33 @@ final class PaymentsListTable extends \WP_List_Table {
 		);
 
 		return sprintf( '<a href="%s">#%s</a>', esc_url( $url ), esc_html( $receipt['receipt_number'] ) );
+	}
+
+	/**
+	 * @param array<string,mixed> $item
+	 */
+	public function column_status( $item ): string {
+		return Badge::render( $item['status'] );
+	}
+
+	/**
+	 * @param array<string,mixed> $item
+	 */
+	public function column_actions( $item ): string {
+		if ( Payment::STATUS_VOIDED === $item['status'] ) {
+			return '&#8212;';
+		}
+
+		$void_url = add_query_arg(
+			array(
+				'page'   => PaymentsController::page_slug(),
+				'action' => 'void',
+				'id'     => $item['id'],
+			),
+			admin_url( 'admin.php' )
+		);
+
+		return sprintf( '<a href="%s" class="button button-small">%s</a>', esc_url( $void_url ), esc_html__( 'Void', 'chrx-rental-manager' ) );
 	}
 
 	public static function method_label( string $method ): string {

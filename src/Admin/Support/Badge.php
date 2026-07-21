@@ -32,6 +32,8 @@ final class Badge {
 		'ended'       => 'Ended',
 		'renewed'     => 'Renewed',
 		'former'      => 'Former',
+		'recorded'    => 'Recorded',
+		'voided'      => 'Voided',
 	);
 
 	public static function render( string $status, ?string $label = null ): string {

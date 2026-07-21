@@ -28,6 +28,7 @@ final class Settings {
 	public const OPT_COMPANY_ADDRESS        = 'chrx_rm_company_address';
 	public const OPT_COMPANY_PHONE          = 'chrx_rm_company_phone';
 	public const OPT_MANAGEMENT_FEE_PERCENT = 'chrx_rm_management_fee_percent';
+	public const OPT_HIDE_OTHER_MENUS       = 'chrx_rm_hide_other_menus';
 
 	public const LATE_FEE_TYPE_FLAT    = 'flat';
 	public const LATE_FEE_TYPE_PERCENT = 'percent';
@@ -130,5 +131,18 @@ final class Settings {
 	 */
 	public static function management_fee_percent(): float {
 		return (float) get_option( self::OPT_MANAGEMENT_FEE_PERCENT, 10.0 );
+	}
+
+	/**
+	 * Admin-configurable toggle (Settings screen, Administrator-only via
+	 * CAP_MANAGE_SETTINGS) for whether non-admin roles see only the Rental
+	 * Manager menu in wp-admin, or the full WP admin menu. Defaults to
+	 * enabled — a focused, single-purpose admin experience for Staff and
+	 * Landlord-Owner accounts out of the box. Administrators always see
+	 * every menu regardless of this setting (Admin\Menu::hide_other_menus()
+	 * exempts them explicitly).
+	 */
+	public static function hide_other_menus_enabled(): bool {
+		return (bool) get_option( self::OPT_HIDE_OTHER_MENUS, true );
 	}
 }

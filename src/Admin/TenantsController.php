@@ -70,16 +70,23 @@ final class TenantsController {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
 		if ( isset( $_GET['rm_action'] ) && 'archive' === $_GET['rm_action'] ) {
-			$this->handle_archive_action();
+			$this->handle_trash_action();
 
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
 		if ( isset( $_GET['rm_action'] ) && 'restore' === $_GET['rm_action'] ) {
 			$this->handle_restore_action();
+
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
+		if ( isset( $_GET['rm_action'] ) && 'delete_permanently' === $_GET['rm_action'] ) {
+			$this->handle_delete_permanently_action();
 		}
 	}
 
@@ -151,8 +158,9 @@ final class TenantsController {
 			wp_die( esc_html__( 'You do not have permission to manage tenants.', 'chrx-rental-manager' ), 403 );
 		}
 
-		$archived = $this->tenants->all_archived();
-		$list_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$archived               = $this->tenants->all_archived();
+		$list_url               = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$can_delete_permanently = $this->access->is_administrator( get_current_user_id() );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/tenants-archived.php';
 	}
@@ -299,18 +307,18 @@ final class TenantsController {
 		exit;
 	}
 
-	private function handle_archive_action(): void {
+	private function handle_trash_action(): void {
 		check_admin_referer( 'rm_tenant_archive' );
 
 		if ( ! current_user_can( RoleManager::CAP_MANAGE_TENANTS ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive tenants.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete tenants.', 'chrx-rental-manager' ), 403 );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$tenant_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
 
 		if ( ! $this->tenant_visible_to_current_user( $tenant_id ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive this tenant.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete this tenant.', 'chrx-rental-manager' ), 403 );
 		}
 
 		$active_lease = null;
@@ -322,7 +330,7 @@ final class TenantsController {
 		}
 
 		if ( null !== $active_lease ) {
-			FlashNotice::set( 'tenants', __( 'This tenant has an active lease. End the lease before archiving the tenant.', 'chrx-rental-manager' ) );
+			FlashNotice::set( 'tenants', __( 'This tenant has an active lease. End the lease before deleting the tenant.', 'chrx-rental-manager' ) );
 			wp_safe_redirect(
 				add_query_arg(
 					array(
@@ -338,7 +346,7 @@ final class TenantsController {
 		$this->tenants->soft_delete( $tenant_id );
 		$this->tenants->update( $tenant_id, array( 'status' => Tenant::STATUS_FORMER ) );
 
-		FlashNotice::set( 'tenants', __( 'Tenant archived.', 'chrx-rental-manager' ) );
+		FlashNotice::set( 'tenants', __( 'Tenant moved to trash.', 'chrx-rental-manager' ) );
 		wp_safe_redirect( add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) ) );
 		exit;
 	}
@@ -365,6 +373,46 @@ final class TenantsController {
 				admin_url( 'admin.php' )
 			)
 		);
+		exit;
+	}
+
+	private function handle_delete_permanently_action(): void {
+		check_admin_referer( 'rm_tenant_delete_permanently' );
+
+		if ( ! $this->access->is_administrator( get_current_user_id() ) ) {
+			wp_die( esc_html__( 'You do not have permission to permanently delete tenants.', 'chrx-rental-manager' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$tenant_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+		$tenant    = $this->tenants->find( $tenant_id );
+
+		if ( null === $tenant ) {
+			wp_die( esc_html__( 'Tenant not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$archived_url = add_query_arg(
+			array(
+				'page'   => self::PAGE_SLUG,
+				'action' => 'archived',
+			),
+			admin_url( 'admin.php' )
+		);
+
+		if ( null === $tenant['deleted_at'] ) {
+			wp_die( esc_html__( 'This tenant must be moved to trash before it can be permanently deleted.', 'chrx-rental-manager' ), 400 );
+		}
+
+		if ( $this->tenants->has_lease_history( $tenant_id ) ) {
+			FlashNotice::set( 'tenants', __( 'This tenant has lease history and cannot be permanently deleted. It will remain in the trash.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( $archived_url );
+			exit;
+		}
+
+		$this->tenants->delete_permanently( $tenant_id );
+
+		FlashNotice::set( 'tenants', __( 'Tenant permanently deleted.', 'chrx-rental-manager' ) );
+		wp_safe_redirect( $archived_url );
 		exit;
 	}
 

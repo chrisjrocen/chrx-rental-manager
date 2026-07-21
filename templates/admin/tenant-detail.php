@@ -55,7 +55,7 @@ foreach ( array_slice( explode( ' ', trim( $tenant['full_name'] ) ), 0, 2 ) as $
 		</div>
 		<?php if ( $can_manage ) : ?>
 			<?php
-			$archive_url = wp_nonce_url(
+			$trash_url = wp_nonce_url(
 				add_query_arg(
 					array(
 						'page'      => 'chrx-rm-tenants',
@@ -69,7 +69,7 @@ foreach ( array_slice( explode( ' ', trim( $tenant['full_name'] ) ), 0, 2 ) as $
 			?>
 			<div class="chrx-rm-detail-header__actions">
 				<a href="<?php echo esc_url( $edit_url ); ?>" class="button"><?php esc_html_e( 'Edit tenant', 'chrx-rental-manager' ); ?></a>
-				<a href="<?php echo esc_url( $archive_url ); ?>" class="button" onclick="return confirm('<?php echo esc_js( __( 'Archive this tenant?', 'chrx-rental-manager' ) ); ?>');"><?php esc_html_e( 'Archive', 'chrx-rental-manager' ); ?></a>
+				<a href="<?php echo esc_url( $trash_url ); ?>" class="button" onclick="return confirm('<?php echo esc_js( __( 'Move this tenant to trash?', 'chrx-rental-manager' ) ); ?>');"><?php esc_html_e( 'Move to Trash', 'chrx-rental-manager' ); ?></a>
 			</div>
 		<?php endif; ?>
 	</div>

@@ -69,16 +69,23 @@ final class PropertiesController {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
 		if ( isset( $_GET['rm_action'] ) && 'archive' === $_GET['rm_action'] ) {
-			$this->handle_archive_action();
+			$this->handle_trash_action();
 
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
 		if ( isset( $_GET['rm_action'] ) && 'restore' === $_GET['rm_action'] ) {
 			$this->handle_restore_action();
+
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action().
+		if ( isset( $_GET['rm_action'] ) && 'delete_permanently' === $_GET['rm_action'] ) {
+			$this->handle_delete_permanently_action();
 		}
 	}
 
@@ -151,8 +158,9 @@ final class PropertiesController {
 			wp_die( esc_html__( 'You do not have permission to manage properties.', 'chrx-rental-manager' ), 403 );
 		}
 
-		$archived = $this->properties->all_archived();
-		$list_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$archived               = $this->properties->all_archived();
+		$list_url               = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$can_delete_permanently = $this->access->is_administrator( get_current_user_id() );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/properties-archived.php';
 	}
@@ -301,25 +309,25 @@ final class PropertiesController {
 		}
 	}
 
-	private function handle_archive_action(): void {
+	private function handle_trash_action(): void {
 		check_admin_referer( 'rm_property_archive' );
 
 		if ( ! current_user_can( RoleManager::CAP_MANAGE_PROPERTIES ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive properties.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete properties.', 'chrx-rental-manager' ), 403 );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$property_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
 
 		if ( ! $this->access->userCanAccessProperty( get_current_user_id(), $property_id ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive this property.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete this property.', 'chrx-rental-manager' ), 403 );
 		}
 
 		// SPEC.md §4.1: a property with units that have lease history is
-		// blocked from deletion — archived instead, which is exactly what
+		// blocked from deletion — trashed instead, which is exactly what
 		// soft_delete() already does; units-with-history stay queryable.
 		if ( $this->properties->has_units( $property_id ) ) {
-			FlashNotice::set( 'properties', __( 'This property still has units. Archive or reassign its units first.', 'chrx-rental-manager' ) );
+			FlashNotice::set( 'properties', __( 'This property still has units. Delete or reassign its units first.', 'chrx-rental-manager' ) );
 			wp_safe_redirect(
 				add_query_arg(
 					array(
@@ -334,7 +342,7 @@ final class PropertiesController {
 
 		$this->properties->soft_delete( $property_id );
 
-		FlashNotice::set( 'properties', __( 'Property archived.', 'chrx-rental-manager' ) );
+		FlashNotice::set( 'properties', __( 'Property moved to trash.', 'chrx-rental-manager' ) );
 		wp_safe_redirect( add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) ) );
 		exit;
 	}
@@ -361,6 +369,46 @@ final class PropertiesController {
 				admin_url( 'admin.php' )
 			)
 		);
+		exit;
+	}
+
+	private function handle_delete_permanently_action(): void {
+		check_admin_referer( 'rm_property_delete_permanently' );
+
+		if ( ! $this->access->is_administrator( get_current_user_id() ) ) {
+			wp_die( esc_html__( 'You do not have permission to permanently delete properties.', 'chrx-rental-manager' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$property_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+		$property    = $this->properties->find( $property_id );
+
+		if ( null === $property ) {
+			wp_die( esc_html__( 'Property not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$archived_url = add_query_arg(
+			array(
+				'page'   => self::PAGE_SLUG,
+				'action' => 'archived',
+			),
+			admin_url( 'admin.php' )
+		);
+
+		if ( null === $property['deleted_at'] ) {
+			wp_die( esc_html__( 'This property must be moved to trash before it can be permanently deleted.', 'chrx-rental-manager' ), 400 );
+		}
+
+		if ( $this->properties->has_any_units( $property_id ) ) {
+			FlashNotice::set( 'properties', __( 'This property still has units (including trashed ones) and cannot be permanently deleted. It will remain in the trash.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( $archived_url );
+			exit;
+		}
+
+		$this->properties->delete_permanently( $property_id );
+
+		FlashNotice::set( 'properties', __( 'Property permanently deleted.', 'chrx-rental-manager' ) );
+		wp_safe_redirect( $archived_url );
 		exit;
 	}
 

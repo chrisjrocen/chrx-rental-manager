@@ -160,4 +160,15 @@ final class PaymentAllocatorTest extends IntegrationTestCase {
 		$charge = $this->charges->find( $charge_id );
 		$this->assertSame( Charge::STATUS_WAIVED, $charge['status'] );
 	}
+
+	public function test_a_voided_unallocated_credit_is_never_swept_onto_a_charge(): void {
+		$allocation = $this->allocator->record_payment( $this->lease_id, null, 500.0, Payment::METHOD_CASH, '', 1, '2026-02-01 00:00:00' );
+		$this->payments->void( $allocation['primary_payment_id'], 'recorded in error', 1 );
+
+		$charge_id = $this->insert_charge( 1000.0 );
+		$this->allocator->apply_credits_to_charge( $this->lease_id, $charge_id );
+
+		$charge = $this->charges->find( $charge_id );
+		$this->assertSame( Charge::STATUS_UNPAID, $charge['status'], 'A voided credit must not be swept onto a new charge.' );
+	}
 }

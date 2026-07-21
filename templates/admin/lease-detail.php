@@ -116,7 +116,7 @@ $deposit_badge_key = 'paid' === $lease['deposit_status'] ? 'paid' : 'unpaid';
 			<?php endif; ?>
 			<?php if ( $can_manage ) : ?>
 				<?php
-				$archive_url = wp_nonce_url(
+				$trash_url = wp_nonce_url(
 					add_query_arg(
 						array(
 							'page'      => 'chrx-rm-leases',
@@ -129,7 +129,7 @@ $deposit_badge_key = 'paid' === $lease['deposit_status'] ? 'paid' : 'unpaid';
 				);
 				?>
 				<a href="<?php echo esc_url( $edit_url ); ?>" class="button"><?php esc_html_e( 'Edit lease', 'chrx-rental-manager' ); ?></a>
-				<a href="<?php echo esc_url( $archive_url ); ?>" class="button" onclick="return confirm('<?php echo esc_js( __( 'Archive this lease?', 'chrx-rental-manager' ) ); ?>');"><?php esc_html_e( 'Archive', 'chrx-rental-manager' ); ?></a>
+				<a href="<?php echo esc_url( $trash_url ); ?>" class="button" onclick="return confirm('<?php echo esc_js( __( 'Move this lease to trash?', 'chrx-rental-manager' ) ); ?>');"><?php esc_html_e( 'Move to Trash', 'chrx-rental-manager' ); ?></a>
 			<?php endif; ?>
 		</div>
 	</div>
@@ -179,6 +179,7 @@ $deposit_badge_key = 'paid' === $lease['deposit_status'] ? 'paid' : 'unpaid';
 						<th style="text-align:right;"><?php esc_html_e( 'Charged', 'chrx-rental-manager' ); ?></th>
 						<th style="text-align:right;"><?php esc_html_e( 'Paid', 'chrx-rental-manager' ); ?></th>
 						<th><?php esc_html_e( 'Status', 'chrx-rental-manager' ); ?></th>
+						<th><?php esc_html_e( 'Actions', 'chrx-rental-manager' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -194,6 +195,25 @@ $deposit_badge_key = 'paid' === $lease['deposit_status'] ? 'paid' : 'unpaid';
 							</td>
 							<td style="text-align:right;"><?php echo esc_html( Money::format( (float) $charge['paid'] ) ); ?></td>
 							<td><?php echo wp_kses_post( Badge::render( $charge['status'] ) ); ?></td>
+							<td>
+								<?php if ( $can_manage && Charge::TYPE_LATE_FEE === $charge['type'] && in_array( $charge['status'], array( Charge::STATUS_UNPAID, Charge::STATUS_PARTIAL ), true ) ) : ?>
+									<?php
+									$waive_url = wp_nonce_url(
+										add_query_arg(
+											array(
+												'page'      => 'chrx-rm-leases',
+												'rm_action' => 'waive_charge',
+												'charge_id' => $charge['id'],
+												'id'        => $lease['id'],
+											),
+											admin_url( 'admin.php' )
+										),
+										'rm_charge_waive'
+									);
+									?>
+									<a href="<?php echo esc_url( $waive_url ); ?>" class="button button-small" onclick="return confirm('<?php echo esc_js( __( 'Waive this late fee?', 'chrx-rental-manager' ) ); ?>');"><?php esc_html_e( 'Waive', 'chrx-rental-manager' ); ?></a>
+								<?php endif; ?>
+							</td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>

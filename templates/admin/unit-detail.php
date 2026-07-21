@@ -47,7 +47,7 @@ $entity_id   = (int) $unit['id'];
 		</div>
 		<?php if ( $can_manage ) : ?>
 			<?php
-			$archive_url = wp_nonce_url(
+			$trash_url = wp_nonce_url(
 				add_query_arg(
 					array(
 						'page'      => 'chrx-rm-units',
@@ -61,7 +61,7 @@ $entity_id   = (int) $unit['id'];
 			?>
 			<div class="chrx-rm-detail-header__actions">
 				<a href="<?php echo esc_url( $edit_url ); ?>" class="button"><?php esc_html_e( 'Edit unit', 'chrx-rental-manager' ); ?></a>
-				<a href="<?php echo esc_url( $archive_url ); ?>" class="button" onclick="return confirm('<?php echo esc_js( __( 'Archive this unit?', 'chrx-rental-manager' ) ); ?>');"><?php esc_html_e( 'Archive', 'chrx-rental-manager' ); ?></a>
+				<a href="<?php echo esc_url( $trash_url ); ?>" class="button" onclick="return confirm('<?php echo esc_js( __( 'Move this unit to trash?', 'chrx-rental-manager' ) ); ?>');"><?php esc_html_e( 'Move to Trash', 'chrx-rental-manager' ); ?></a>
 			</div>
 		<?php endif; ?>
 	</div>

@@ -125,4 +125,31 @@ final class Unit extends AbstractRepository {
 			)
 		);
 	}
+
+	/**
+	 * Any lease row at all (deleted or not) — a unit with lease history may
+	 * have charges/payments hanging off those leases, so it must stay
+	 * blocked from permanent delete even if every lease is already trashed.
+	 */
+	public function has_lease_history( int $unit_id ): bool {
+		$wpdb = $this->wpdb();
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}rm_leases WHERE unit_id = %d",
+				$unit_id
+			)
+		);
+
+		return (int) $count > 0;
+	}
+
+	/**
+	 * Permanently removes the unit row. Only safe to call after
+	 * has_lease_history() returns false — callers (UnitsController) are
+	 * responsible for enforcing that guard before invoking this.
+	 */
+	public function delete_permanently( int $unit_id ): bool {
+		return $this->hard_delete( $unit_id );
+	}
 }

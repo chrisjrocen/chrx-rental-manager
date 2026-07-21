@@ -6,6 +6,7 @@ namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Admin\Support\Csv;
 use ChrxRentalManager\Admin\Support\FlashNotice;
+use ChrxRentalManager\Billing\PaymentAllocator;
 use ChrxRentalManager\Billing\ReceiptMailer;
 use ChrxRentalManager\Billing\ReceiptPdf;
 use ChrxRentalManager\Data\Lease;
@@ -32,6 +33,7 @@ final class PaymentsController {
 	private const EXPORT_ACTION   = 'rm_payments_export_csv';
 	private const EMAIL_ACTION    = 'rm_email_receipt';
 	private const DOWNLOAD_ACTION = 'rm_download_receipt';
+	private const VOID_ACTION     = 'rm_void_payment';
 
 	private Payment $payments;
 	private Lease $leases;
@@ -42,6 +44,7 @@ final class PaymentsController {
 	private Access $access;
 	private ReceiptPdf $receipt_pdf;
 	private ReceiptMailer $receipt_mailer;
+	private PaymentAllocator $payment_allocator;
 
 	public function __construct(
 		?Payment $payments = null,
@@ -52,23 +55,26 @@ final class PaymentsController {
 		?Receipt $receipts = null,
 		?Access $access = null,
 		?ReceiptPdf $receipt_pdf = null,
-		?ReceiptMailer $receipt_mailer = null
+		?ReceiptMailer $receipt_mailer = null,
+		?PaymentAllocator $payment_allocator = null
 	) {
-		$this->payments       = $payments ?? new Payment();
-		$this->leases         = $leases ?? new Lease();
-		$this->units          = $units ?? new Unit();
-		$this->tenants        = $tenants ?? new Tenant();
-		$this->properties     = $properties ?? new Property();
-		$this->receipts       = $receipts ?? new Receipt();
-		$this->access         = $access ?? new Access();
-		$this->receipt_pdf    = $receipt_pdf ?? new ReceiptPdf();
-		$this->receipt_mailer = $receipt_mailer ?? new ReceiptMailer();
+		$this->payments          = $payments ?? new Payment();
+		$this->leases            = $leases ?? new Lease();
+		$this->units             = $units ?? new Unit();
+		$this->tenants           = $tenants ?? new Tenant();
+		$this->properties        = $properties ?? new Property();
+		$this->receipts          = $receipts ?? new Receipt();
+		$this->access            = $access ?? new Access();
+		$this->receipt_pdf       = $receipt_pdf ?? new ReceiptPdf();
+		$this->receipt_mailer    = $receipt_mailer ?? new ReceiptMailer();
+		$this->payment_allocator = $payment_allocator ?? new PaymentAllocator( $this->payments );
 	}
 
 	public function register(): void {
 		add_action( 'admin_post_' . self::EXPORT_ACTION, array( $this, 'handle_export_csv' ) );
 		add_action( 'admin_post_' . self::EMAIL_ACTION, array( $this, 'handle_email_receipt' ) );
 		add_action( 'admin_post_' . self::DOWNLOAD_ACTION, array( $this, 'handle_download_receipt' ) );
+		add_action( 'admin_post_' . self::VOID_ACTION, array( $this, 'handle_void_payment' ) );
 	}
 
 	public function render(): void {
@@ -84,6 +90,17 @@ final class PaymentsController {
 		if ( 'receipt' === $action ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param, no state change.
 			$this->render_receipt( isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0, $notice );
+
+			return;
+		}
+
+		if ( 'void' === $action ) {
+			if ( ! current_user_can( RoleManager::CAP_MANAGE_PAYMENTS ) ) {
+				wp_die( esc_html__( 'You do not have permission to void payments.', 'chrx-rental-manager' ), 403 );
+			}
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param, no state change.
+			$this->render_void_form( isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0, $notice );
 
 			return;
 		}
@@ -176,6 +193,90 @@ final class PaymentsController {
 		$list_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/receipt-view.php';
+	}
+
+	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- $notice is used by the included template, which shares this method's local scope.
+	private function render_void_form( int $payment_id, ?string $notice ): void {
+		$payment = $this->payments->find( $payment_id );
+
+		if ( null === $payment ) {
+			wp_die( esc_html__( 'Payment not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$lease  = $this->leases->find( (int) $payment['lease_id'] );
+		$unit   = null !== $lease ? $this->units->find( (int) $lease['unit_id'] ) : null;
+		$tenant = null !== $lease ? $this->tenants->find( (int) $lease['tenant_id'] ) : null;
+
+		if ( null === $unit || ! $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] ) ) {
+			wp_die( esc_html__( 'You do not have permission to void this payment.', 'chrx-rental-manager' ), 403 );
+		}
+
+		if ( Payment::STATUS_VOIDED === $payment['status'] ) {
+			FlashNotice::set( 'payments', __( 'This payment has already been voided.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+
+		$list_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+
+		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/payment-void-form.php';
+	}
+
+	public function handle_void_payment(): void {
+		check_admin_referer( self::VOID_ACTION );
+
+		if ( ! current_user_can( RoleManager::CAP_MANAGE_PAYMENTS ) ) {
+			wp_die( esc_html__( 'You do not have permission to void payments.', 'chrx-rental-manager' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$payment_id = isset( $_POST['payment_id'] ) ? absint( $_POST['payment_id'] ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$reason = isset( $_POST['rm_void_reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['rm_void_reason'] ) ) : '';
+
+		$payment = $this->payments->find( $payment_id );
+
+		if ( null === $payment ) {
+			wp_die( esc_html__( 'Payment not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$lease = $this->leases->find( (int) $payment['lease_id'] );
+		$unit  = null !== $lease ? $this->units->find( (int) $lease['unit_id'] ) : null;
+
+		if ( null === $unit || ! $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] ) ) {
+			wp_die( esc_html__( 'You do not have permission to void this payment.', 'chrx-rental-manager' ), 403 );
+		}
+
+		$back_to_form = add_query_arg(
+			array(
+				'page'   => self::PAGE_SLUG,
+				'action' => 'void',
+				'id'     => $payment_id,
+			),
+			admin_url( 'admin.php' )
+		);
+
+		if ( '' === $reason ) {
+			FlashNotice::set( 'payments', __( 'Please provide a reason for voiding this payment.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( $back_to_form );
+			exit;
+		}
+
+		if ( Payment::STATUS_VOIDED === $payment['status'] ) {
+			FlashNotice::set( 'payments', __( 'This payment has already been voided.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+
+		$this->payments->void( $payment_id, $reason, get_current_user_id() );
+
+		if ( null !== $payment['charge_id'] ) {
+			$this->payment_allocator->sync_charge_status( (int) $payment['charge_id'] );
+		}
+
+		FlashNotice::set( 'payments', __( 'Payment voided.', 'chrx-rental-manager' ) );
+		wp_safe_redirect( add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	public function handle_export_csv(): void {

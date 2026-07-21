@@ -117,4 +117,31 @@ final class LeaseInvariantTest extends IntegrationTestCase {
 
 		$this->leases->change_status( $second_id, Lease::STATUS_ACTIVE );
 	}
+
+	/**
+	 * Regression test: soft-deleting (trashing) a lease must resync the
+	 * unit's derived status the same way change_status() does, or the unit
+	 * is left stuck at 'occupied' and its own trash/delete action is wrongly
+	 * blocked afterward.
+	 */
+	public function test_soft_deleting_lease_marks_unit_vacant(): void {
+		$lease_id = $this->leases->create( $this->lease_data( $this->tenant_a_id ) );
+
+		$this->leases->soft_delete( $lease_id );
+
+		$unit = $this->units->find( $this->unit_id );
+		$this->assertSame( Unit::STATUS_VACANT, $unit['status'] );
+		$this->assertNull( $this->leases->active_lease_for_unit( $this->unit_id ) );
+	}
+
+	public function test_soft_deleting_lease_respects_manual_maintenance_override(): void {
+		$lease_id = $this->leases->create( $this->lease_data( $this->tenant_a_id ) );
+
+		$this->units->set_manual_status( $this->unit_id, Unit::STATUS_MAINTENANCE );
+
+		$this->leases->soft_delete( $lease_id );
+
+		$unit = $this->units->find( $this->unit_id );
+		$this->assertSame( Unit::STATUS_MAINTENANCE, $unit['status'] );
+	}
 }

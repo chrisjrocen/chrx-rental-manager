@@ -19,7 +19,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Lease extends AbstractRepository {
 
-	use SoftDeletes;
+	use SoftDeletes {
+		soft_delete as private trait_soft_delete;
+	}
 
 	protected const TABLE = 'rm_leases';
 
@@ -82,6 +84,26 @@ final class Lease extends AbstractRepository {
 		$result = $this->update( $lease_id, array( 'status' => $new_status ) );
 
 		if ( $result ) {
+			$still_active = $this->active_lease_for_unit( (int) $lease['unit_id'] );
+			$this->units->sync_derived_status( (int) $lease['unit_id'], null !== $still_active );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Soft-deleting a lease removes it from active_lease_for_unit()'s result
+	 * set the same way change_status() to a non-active status does — so the
+	 * unit's derived occupied/vacant status must be resynced here too, or a
+	 * trashed lease leaves rm_units.status permanently stale at 'occupied',
+	 * wrongly blocking the unit's own trash/delete action afterward.
+	 */
+	public function soft_delete( int $id ): bool {
+		$lease = $this->find( $id );
+
+		$result = $this->trait_soft_delete( $id );
+
+		if ( $result && null !== $lease ) {
 			$still_active = $this->active_lease_for_unit( (int) $lease['unit_id'] );
 			$this->units->sync_derived_status( (int) $lease['unit_id'], null !== $still_active );
 		}
@@ -163,6 +185,44 @@ final class Lease extends AbstractRepository {
 			"SELECT * FROM {$table} WHERE status = %s AND deleted_at IS NULL AND end_date <= DATE_ADD(%s, INTERVAL %d DAY) ORDER BY end_date ASC",
 			array( self::STATUS_ACTIVE, current_time( 'mysql' ), $days_ahead )
 		);
+	}
+
+	/**
+	 * Any row in rm_charges or rm_payments for this lease — used to block
+	 * permanent delete, since removing the lease would orphan financial
+	 * rows that must remain queryable for reporting/reconciliation.
+	 */
+	public function has_financial_history( int $lease_id ): bool {
+		$wpdb = $this->wpdb();
+
+		$charge_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}rm_charges WHERE lease_id = %d",
+				$lease_id
+			)
+		);
+
+		if ( $charge_count > 0 ) {
+			return true;
+		}
+
+		$payment_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}rm_payments WHERE lease_id = %d",
+				$lease_id
+			)
+		);
+
+		return $payment_count > 0;
+	}
+
+	/**
+	 * Permanently removes the lease row. Only safe to call after
+	 * has_financial_history() returns false — callers (LeasesController)
+	 * are responsible for enforcing that guard before invoking this.
+	 */
+	public function delete_permanently( int $lease_id ): bool {
+		return $this->hard_delete( $lease_id );
 	}
 
 	/**

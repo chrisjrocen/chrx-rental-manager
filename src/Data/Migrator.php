@@ -27,7 +27,7 @@ final class Migrator {
 	 * applies additive changes (new tables/columns/indexes), so column
 	 * removals or type changes still need an explicit upgrade routine.
 	 */
-	public const SCHEMA_VERSION = '1';
+	public const SCHEMA_VERSION = '2';
 
 	public static function maybe_migrate(): void {
 		if ( get_option( \ChrxRentalManager\DB_SCHEMA_OPTION ) === self::SCHEMA_VERSION ) {
@@ -125,8 +125,9 @@ final class Migrator {
 
 			// Financial ledger tables: never hard-deleted through the application
 			// layer (SPEC.md §3) — no deleted_at column. Corrections happen via
-			// status transitions (e.g. charges.status = 'waived') or adjustment
-			// entries, never row removal.
+			// status transitions (e.g. charges.status = 'waived',
+			// payments.status = 'voided') or adjustment entries, never row
+			// removal.
 			"CREATE TABLE {$prefix}rm_charges (
 				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 				lease_id BIGINT UNSIGNED NOT NULL,
@@ -151,10 +152,15 @@ final class Migrator {
 				recorded_by BIGINT UNSIGNED NOT NULL,
 				receipt_id BIGINT UNSIGNED NULL,
 				paid_at DATETIME NOT NULL,
+				status VARCHAR(20) NOT NULL DEFAULT 'recorded',
+				voided_reason VARCHAR(255) NOT NULL DEFAULT '',
+				voided_by BIGINT UNSIGNED NULL,
+				voided_at DATETIME NULL,
 				created_at DATETIME NOT NULL,
 				PRIMARY KEY  (id),
 				KEY lease_id (lease_id),
-				KEY charge_id (charge_id)
+				KEY charge_id (charge_id),
+				KEY status (status)
 			) ENGINE=InnoDB {$charset_collate};",
 
 			"CREATE TABLE {$prefix}rm_receipts (

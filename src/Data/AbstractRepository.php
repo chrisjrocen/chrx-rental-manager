@@ -84,13 +84,14 @@ abstract class AbstractRepository {
 	}
 
 	/**
-	 * Intentionally protected: financial repositories (Charge, Payment,
-	 * Receipt) never expose a public delete — corrections happen via status
-	 * transitions or adjustment entries (SPEC.md §3). Soft-deletable
-	 * repositories expose their own soft_delete()/restore() via the
-	 * SoftDeletes trait instead of this.
+	 * Financial repositories (Charge, Payment, Receipt) must never call this
+	 * — corrections happen via status transitions (e.g. Charge::mark_waived(),
+	 * Payment::void()), never row removal (SPEC.md §3). The four
+	 * soft-deletable repositories (Property, Unit, Tenant, Lease) expose
+	 * this via their own delete_permanently() wrapper, reachable only from
+	 * the Trash view after their own has_*_history() guard passes.
 	 */
-	protected function hard_delete( int $id ): bool {
+	public function hard_delete( int $id ): bool {
 		$wpdb = $this->wpdb();
 
 		return false !== $wpdb->delete( $this->table_name(), array( 'id' => $id ), array( '%d' ) );

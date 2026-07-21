@@ -183,6 +183,27 @@ final class ReportsScopingTest extends IntegrationTestCase {
 		$this->assertSame( 1, $collected['count'] );
 	}
 
+	public function test_collected_this_month_excludes_voided_payments(): void {
+		$payments = new Payment();
+		$payments->insert( [
+			'lease_id'       => $this->lease_a,
+			'charge_id'      => null,
+			'amount'         => 250,
+			'method'         => Payment::METHOD_CASH,
+			'reference_note' => '',
+			'recorded_by'    => 1,
+			'receipt_id'     => null,
+			'paid_at'        => current_time( 'mysql' ),
+			'status'         => Payment::STATUS_VOIDED,
+		] );
+
+		$scope_a   = $this->scope_for( $this->landlord_a );
+		$collected = $this->reports->collected_this_month( $scope_a );
+
+		$this->assertSame( 500.0, $collected['total'], 'A voided payment must not inflate the collected-this-month total.' );
+		$this->assertSame( 1, $collected['count'] );
+	}
+
 	public function test_expiring_within_never_leaks_another_owners_lease(): void {
 		$scope_a = $this->scope_for( $this->landlord_a );
 		$rows    = $this->reports->expiring_within( $scope_a, 365 );

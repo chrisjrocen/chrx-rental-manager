@@ -64,4 +64,31 @@ final class Tenant extends AbstractRepository {
 	public function link_wp_user( int $tenant_id, int $wp_user_id ): bool {
 		return $this->update( $tenant_id, array( 'wp_user_id' => $wp_user_id ) );
 	}
+
+	/**
+	 * Any lease row at all (deleted/trashed or not) — used to block
+	 * permanent delete, since a tenant's leases may carry charges/payments
+	 * that must stay queryable.
+	 */
+	public function has_lease_history( int $tenant_id ): bool {
+		$wpdb = $this->wpdb();
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}rm_leases WHERE tenant_id = %d",
+				$tenant_id
+			)
+		);
+
+		return (int) $count > 0;
+	}
+
+	/**
+	 * Permanently removes the tenant row. Only safe to call after
+	 * has_lease_history() returns false — callers (TenantsController) are
+	 * responsible for enforcing that guard before invoking this.
+	 */
+	public function delete_permanently( int $tenant_id ): bool {
+		return $this->hard_delete( $tenant_id );
+	}
 }

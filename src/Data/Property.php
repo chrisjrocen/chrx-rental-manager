@@ -39,9 +39,7 @@ final class Property extends AbstractRepository {
 
 	/**
 	 * Blocked-delete check per SPEC.md §4.1: a property with units that have
-	 * lease history must be archived, not hard-deleted. This class never
-	 * exposes hard_delete() publicly at all, so this is only relevant to
-	 * callers deciding whether soft_delete() is appropriate to offer in the UI.
+	 * lease history must be archived (trashed), not permanently deleted.
 	 */
 	public function has_units( int $property_id ): bool {
 		$wpdb = $this->wpdb();
@@ -54,5 +52,34 @@ final class Property extends AbstractRepository {
 		);
 
 		return (int) $count > 0;
+	}
+
+	/**
+	 * Any unit row at all (deleted/trashed or not) — used to block permanent
+	 * delete, since even a trashed unit may carry lease/financial history
+	 * that must stay queryable. Staff must permanently delete every one of
+	 * the property's units first, each individually gated by
+	 * Unit::has_lease_history().
+	 */
+	public function has_any_units( int $property_id ): bool {
+		$wpdb = $this->wpdb();
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}rm_units WHERE property_id = %d",
+				$property_id
+			)
+		);
+
+		return (int) $count > 0;
+	}
+
+	/**
+	 * Permanently removes the property row. Only safe to call after
+	 * has_any_units() returns false — callers (PropertiesController) are
+	 * responsible for enforcing that guard before invoking this.
+	 */
+	public function delete_permanently( int $property_id ): bool {
+		return $this->hard_delete( $property_id );
 	}
 }

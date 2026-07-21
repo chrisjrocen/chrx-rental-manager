@@ -66,6 +66,10 @@ final class Ledger {
 
 		foreach ( $this->charges->for_lease( $lease_id ) as $charge ) {
 			foreach ( $this->payments->for_charge( (int) $charge['id'] ) as $payment ) {
+				if ( Payment::STATUS_VOIDED === $payment['status'] ) {
+					continue;
+				}
+
 				$paid += (float) $payment['amount'];
 			}
 		}
@@ -84,6 +88,10 @@ final class Ledger {
 		$paid = 0.0;
 
 		foreach ( $this->payments->for_charge( (int) $charge['id'] ) as $payment ) {
+			if ( Payment::STATUS_VOIDED === $payment['status'] ) {
+				continue;
+			}
+
 			$paid += (float) $payment['amount'];
 		}
 

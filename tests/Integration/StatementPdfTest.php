@@ -116,6 +116,38 @@ final class StatementPdfTest extends IntegrationTestCase {
 		$this->assertSame( 0.0, $summary['gross'] );
 	}
 
+	public function test_a_voided_payment_is_excluded_from_collected(): void {
+		$unit_id   = $this->insert_unit( 'S5' );
+		$tenant_id = ( new Tenant() )->insert( [ 'full_name' => 'Voided Payment Tenant' ] );
+
+		$lease_id = ( new Lease( new Unit() ) )->create( [
+			'unit_id'        => $unit_id,
+			'tenant_id'      => $tenant_id,
+			'start_date'     => '2026-01-01',
+			'end_date'       => '2026-12-31',
+			'rent_amount'    => 1000,
+			'billing_day'    => 1,
+			'deposit_amount' => 0,
+			'deposit_status' => 'unpaid',
+		] );
+
+		( new Payment() )->insert( [
+			'lease_id'       => $lease_id,
+			'charge_id'      => null,
+			'amount'         => 1000.0,
+			'method'         => Payment::METHOD_CASH,
+			'reference_note' => '',
+			'recorded_by'    => 1,
+			'receipt_id'     => null,
+			'paid_at'        => '2026-06-15 00:00:00',
+			'status'         => Payment::STATUS_VOIDED,
+		] );
+
+		$summary = $this->statement_pdf->summary( $this->property_id, '2026-06-01', '2026-06-30' );
+
+		$this->assertSame( 0.0, $summary['gross'], 'A voided payment must not count toward a landlord statement\'s collected total.' );
+	}
+
 	public function test_render_returns_a_real_pdf_and_null_for_a_missing_property(): void {
 		$this->insert_unit( 'S4' );
 

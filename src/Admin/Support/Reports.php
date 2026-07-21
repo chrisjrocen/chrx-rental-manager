@@ -184,6 +184,10 @@ final class Reports {
 		$count = 0;
 
 		foreach ( $this->payments_in_scope( $property_ids ) as $payment ) {
+			if ( Payment::STATUS_VOIDED === $payment['status'] ) {
+				continue;
+			}
+
 			if ( gmdate( 'Y-m', strtotime( $payment['paid_at'] ) ) === $month ) {
 				$total += (float) $payment['amount'];
 				++$count;

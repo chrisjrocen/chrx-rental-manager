@@ -4,6 +4,8 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Admin;
 
+use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Roles\Access;
 use ChrxRentalManager\Roles\RoleManager;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,6 +28,7 @@ final class Menu {
 	private ReportsController $reports_controller;
 	private StatementsController $statements_controller;
 	private SettingsController $settings_controller;
+	private Access $access;
 
 	public function __construct(
 		?StaffRolesController $staff_roles_controller = null,
@@ -38,7 +41,8 @@ final class Menu {
 		?DashboardController $dashboard_controller = null,
 		?ReportsController $reports_controller = null,
 		?StatementsController $statements_controller = null,
-		?SettingsController $settings_controller = null
+		?SettingsController $settings_controller = null,
+		?Access $access = null
 	) {
 		$this->staff_roles_controller = $staff_roles_controller ?? new StaffRolesController();
 		$this->properties_controller  = $properties_controller ?? new PropertiesController();
@@ -51,10 +55,12 @@ final class Menu {
 		$this->reports_controller     = $reports_controller ?? new ReportsController();
 		$this->statements_controller  = $statements_controller ?? new StatementsController();
 		$this->settings_controller    = $settings_controller ?? new SettingsController();
+		$this->access                 = $access ?? new Access();
 	}
 
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu_pages' ) );
+		add_action( 'admin_menu', array( $this, 'hide_other_menus' ), 9999 );
 		$this->staff_roles_controller->register();
 		$this->properties_controller->register();
 		$this->units_controller->register();
@@ -167,5 +173,40 @@ final class Menu {
 			SettingsController::page_slug(),
 			array( $this->settings_controller, 'render' )
 		);
+	}
+
+	/**
+	 * Hides every top-level wp-admin menu item except this plugin's own,
+	 * for a fully standalone/white-labeled admin experience for non-admin
+	 * roles (Staff, Landlord-Owner) — Administrators always see the full
+	 * WP admin menu regardless. Admin-configurable via the Settings screen
+	 * (Settings::hide_other_menus_enabled(), CAP_MANAGE_SETTINGS-gated, so
+	 * only Administrators can change it). Hooked at priority 9999 so it
+	 * runs after every other plugin (core included) has registered its
+	 * menu items.
+	 */
+	public function hide_other_menus(): void {
+		if ( ! Settings::hide_other_menus_enabled() ) {
+			return;
+		}
+
+		if ( $this->access->is_administrator( get_current_user_id() ) ) {
+			return;
+		}
+
+		global $menu;
+
+		if ( ! is_array( $menu ) ) {
+			return;
+		}
+
+		foreach ( $menu as $position => $item ) {
+			// $item[2] is the menu slug; separators have no slug.
+			if ( isset( $item[2] ) && 'chrx-rental-manager' === $item[2] ) {
+				continue;
+			}
+
+			unset( $menu[ $position ] );
+		}
 	}
 }

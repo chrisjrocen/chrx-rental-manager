@@ -68,4 +68,14 @@ final class SchemaTest extends IntegrationTestCase {
 			$this->assertNotContains( 'deleted_at', $columns, "{$table} should be append-only, not soft-deletable." );
 		}
 	}
+
+	public function test_payments_table_has_void_correction_columns(): void {
+		global $wpdb;
+
+		$columns = $wpdb->get_col( "DESCRIBE {$wpdb->prefix}rm_payments", 0 );
+
+		foreach ( [ 'status', 'voided_reason', 'voided_by', 'voided_at' ] as $expected_column ) {
+			$this->assertContains( $expected_column, $columns, "rm_payments is missing {$expected_column}." );
+		}
+	}
 }

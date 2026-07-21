@@ -105,16 +105,30 @@ final class LeasesController {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action()/handle_waive_charge_action().
 		if ( isset( $_GET['rm_action'] ) && 'archive' === $_GET['rm_action'] ) {
-			$this->handle_archive_action();
+			$this->handle_trash_action();
 
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_archive_action()/handle_restore_action().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action()/handle_waive_charge_action().
 		if ( isset( $_GET['rm_action'] ) && 'restore' === $_GET['rm_action'] ) {
 			$this->handle_restore_action();
+
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action()/handle_waive_charge_action().
+		if ( isset( $_GET['rm_action'] ) && 'delete_permanently' === $_GET['rm_action'] ) {
+			$this->handle_delete_permanently_action();
+
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified inside handle_trash_action()/handle_restore_action()/handle_delete_permanently_action()/handle_waive_charge_action().
+		if ( isset( $_GET['rm_action'] ) && 'waive_charge' === $_GET['rm_action'] ) {
+			$this->handle_waive_charge_action();
 		}
 	}
 
@@ -205,10 +219,11 @@ final class LeasesController {
 			wp_die( esc_html__( 'You do not have permission to manage leases.', 'chrx-rental-manager' ), 403 );
 		}
 
-		$archived = $this->leases->all_archived();
-		$units    = $this->units;
-		$tenants  = $this->tenants;
-		$list_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$archived               = $this->leases->all_archived();
+		$units                  = $this->units;
+		$tenants                = $this->tenants;
+		$list_url               = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$can_delete_permanently = $this->access->is_administrator( get_current_user_id() );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/leases-archived.php';
 	}
@@ -387,11 +402,11 @@ final class LeasesController {
 		return null === $unit ? 0 : (int) $unit['property_id'];
 	}
 
-	private function handle_archive_action(): void {
+	private function handle_trash_action(): void {
 		check_admin_referer( 'rm_lease_archive' );
 
 		if ( ! current_user_can( RoleManager::CAP_MANAGE_LEASES ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive leases.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete leases.', 'chrx-rental-manager' ), 403 );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
@@ -405,12 +420,12 @@ final class LeasesController {
 		$unit = $this->units->find( (int) $lease['unit_id'] );
 
 		if ( null === $unit || ! $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] ) ) {
-			wp_die( esc_html__( 'You do not have permission to archive this lease.', 'chrx-rental-manager' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to delete this lease.', 'chrx-rental-manager' ), 403 );
 		}
 
 		$this->leases->soft_delete( $lease_id );
 
-		FlashNotice::set( 'leases', __( 'Lease archived.', 'chrx-rental-manager' ) );
+		FlashNotice::set( 'leases', __( 'Lease moved to trash.', 'chrx-rental-manager' ) );
 		wp_safe_redirect( add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) ) );
 		exit;
 	}
@@ -433,6 +448,89 @@ final class LeasesController {
 				array(
 					'page'   => self::PAGE_SLUG,
 					'action' => 'archived',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	private function handle_delete_permanently_action(): void {
+		check_admin_referer( 'rm_lease_delete_permanently' );
+
+		if ( ! $this->access->is_administrator( get_current_user_id() ) ) {
+			wp_die( esc_html__( 'You do not have permission to permanently delete leases.', 'chrx-rental-manager' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$lease_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+		$lease    = $this->leases->find( $lease_id );
+
+		if ( null === $lease ) {
+			wp_die( esc_html__( 'Lease not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$archived_url = add_query_arg(
+			array(
+				'page'   => self::PAGE_SLUG,
+				'action' => 'archived',
+			),
+			admin_url( 'admin.php' )
+		);
+
+		if ( null === $lease['deleted_at'] ) {
+			wp_die( esc_html__( 'This lease must be moved to trash before it can be permanently deleted.', 'chrx-rental-manager' ), 400 );
+		}
+
+		if ( $this->leases->has_financial_history( $lease_id ) ) {
+			FlashNotice::set( 'leases', __( 'This lease has charge or payment history and cannot be permanently deleted. It will remain in the trash.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( $archived_url );
+			exit;
+		}
+
+		$this->leases->delete_permanently( $lease_id );
+
+		FlashNotice::set( 'leases', __( 'Lease permanently deleted.', 'chrx-rental-manager' ) );
+		wp_safe_redirect( $archived_url );
+		exit;
+	}
+
+	private function handle_waive_charge_action(): void {
+		check_admin_referer( 'rm_charge_waive' );
+
+		if ( ! current_user_can( RoleManager::CAP_MANAGE_LEASES ) ) {
+			wp_die( esc_html__( 'You do not have permission to waive charges.', 'chrx-rental-manager' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$charge_id = isset( $_GET['charge_id'] ) ? absint( $_GET['charge_id'] ) : 0;
+		$charge    = $this->charges->find( $charge_id );
+
+		if ( null === $charge ) {
+			wp_die( esc_html__( 'Charge not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$lease = $this->leases->find( (int) $charge['lease_id'] );
+		$unit  = null !== $lease ? $this->units->find( (int) $lease['unit_id'] ) : null;
+
+		if ( null === $unit || ! $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] ) ) {
+			wp_die( esc_html__( 'You do not have permission to waive this charge.', 'chrx-rental-manager' ), 403 );
+		}
+
+		// SPEC.md §4.3: "Staff can waive/delete a late fee charge manually" —
+		// scope this action to late-fee charges only.
+		if ( Charge::TYPE_LATE_FEE !== $charge['type'] ) {
+			wp_die( esc_html__( 'Only late fee charges can be waived.', 'chrx-rental-manager' ), 400 );
+		}
+
+		$this->charges->mark_waived( $charge_id );
+
+		FlashNotice::set( 'leases', __( 'Late fee waived.', 'chrx-rental-manager' ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page' => self::PAGE_SLUG,
+					'id'   => $lease['id'],
 				),
 				admin_url( 'admin.php' )
 			)
