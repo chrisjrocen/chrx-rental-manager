@@ -194,6 +194,26 @@ final class GatewayPaymentServiceTest extends IntegrationTestCase {
 		$this->assertCount( 1, $payments, 'A second settle_successful() call for the same transaction must be a silent no-op.' );
 	}
 
+	public function test_claim_for_settlement_is_the_db_level_guard_a_status_check_alone_cannot_provide(): void {
+		// GatewayTransaction::claim_for_settlement() is the atomic UPDATE
+		// settle_successful()/settle_failed()/expire() rely on to close the
+		// race a plain find()-then-status-check leaves open between two
+		// near-simultaneous webhook deliveries — this exercises the
+		// guard directly, independent of the in-memory short-circuit
+		// already covered by test_settle_successful_is_idempotent_against_a_second_delivery().
+		$charge_id = $this->insert_charge( 200000.0 );
+		$result    = $this->service->initiate_collection( $this->lease_id, $charge_id, 200000.0, '0700000000', GatewayTransaction::INITIATED_BY_TENANT, 1 );
+
+		$first_claim  = $this->transactions->claim_for_settlement( $result['transaction_id'], GatewayTransaction::STATUS_SUCCESSFUL );
+		$second_claim = $this->transactions->claim_for_settlement( $result['transaction_id'], GatewayTransaction::STATUS_SUCCESSFUL );
+
+		$this->assertTrue( $first_claim, 'The first claim on an unresolved transaction must win.' );
+		$this->assertFalse( $second_claim, 'A second claim on an already-resolved transaction must lose.' );
+
+		$transaction = $this->transactions->find( $result['transaction_id'] );
+		$this->assertSame( GatewayTransaction::STATUS_SUCCESSFUL, $transaction['status'] );
+	}
+
 	public function test_settle_failed_marks_the_transaction_failed_and_is_idempotent(): void {
 		$charge_id = $this->insert_charge( 200000.0 );
 		$result    = $this->service->initiate_collection( $this->lease_id, $charge_id, 200000.0, '0700000000', GatewayTransaction::INITIATED_BY_TENANT, 1 );

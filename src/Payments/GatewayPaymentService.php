@@ -203,6 +203,14 @@ final class GatewayPaymentService {
 			return true; // Already resolved by an earlier webhook delivery or the reconciliation cron — at-least-once delivery, dedupe silently.
 		}
 
+		// The atomic DB-level guard: only the caller that actually wins this
+		// UPDATE proceeds to record a payment — closes the race the check
+		// above alone can't (two near-simultaneous deliveries could both
+		// pass it before either has written a resolved status).
+		if ( ! $this->transactions->claim_for_settlement( $transaction_id, GatewayTransaction::STATUS_SUCCESSFUL ) ) {
+			return true;
+		}
+
 		$allocation = $this->allocator->record_payment(
 			(int) $transaction['lease_id'],
 			null === $transaction['charge_id'] ? null : (int) $transaction['charge_id'],
@@ -214,13 +222,9 @@ final class GatewayPaymentService {
 			$transaction_id
 		);
 
-		$update = array( 'status' => GatewayTransaction::STATUS_SUCCESSFUL );
-
 		if ( null !== $raw_payload ) {
-			$update['raw_webhook_payload'] = $raw_payload;
+			$this->transactions->update( $transaction_id, array( 'raw_webhook_payload' => $raw_payload ) );
 		}
-
-		$this->transactions->update( $transaction_id, $update );
 
 		$this->notify_staff_of_payment( $transaction, (int) $allocation['primary_payment_id'] );
 
@@ -250,7 +254,14 @@ final class GatewayPaymentService {
 			return true;
 		}
 
-		$this->transactions->mark_failed( $transaction_id, $raw_payload );
+		if ( ! $this->transactions->claim_for_settlement( $transaction_id, GatewayTransaction::STATUS_FAILED ) ) {
+			return true;
+		}
+
+		if ( null !== $raw_payload ) {
+			$this->transactions->update( $transaction_id, array( 'raw_webhook_payload' => $raw_payload ) );
+		}
+
 		$this->notify_initiator_of_failure( $transaction, $reason ?? __( 'The payment was not completed.', 'chrx-rental-manager' ) );
 
 		return true;
@@ -272,7 +283,10 @@ final class GatewayPaymentService {
 			return true;
 		}
 
-		$this->transactions->mark_expired( $transaction_id );
+		if ( ! $this->transactions->claim_for_settlement( $transaction_id, GatewayTransaction::STATUS_EXPIRED ) ) {
+			return true;
+		}
+
 		$this->notify_initiator_of_failure( $transaction, __( 'The payment request timed out.', 'chrx-rental-manager' ) );
 
 		return true;

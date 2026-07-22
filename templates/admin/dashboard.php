@@ -214,7 +214,7 @@ $payments = new Payment();
 								<td style="text-align:right;font-weight:600;"><?php echo esc_html( Money::format( (float) $payment['amount'] ) ); ?></td>
 								<td>
 									<?php if ( 'unallocated' === $charge_status ) : ?>
-										<?php echo wp_kses_post( Badge::render( 'reserved', __( 'Credit', 'chrx-rental-manager' ) ) ); ?>
+										<?php echo wp_kses_post( Badge::render( 'booked', __( 'Credit', 'chrx-rental-manager' ) ) ); ?>
 									<?php else : ?>
 										<?php echo wp_kses_post( Badge::render( $charge_status ) ); ?>
 									<?php endif; ?>

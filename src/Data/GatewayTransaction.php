@@ -85,10 +85,6 @@ final class GatewayTransaction extends AbstractRepository {
 		);
 	}
 
-	public function mark_successful( int $id ): bool {
-		return $this->update( $id, array( 'status' => self::STATUS_SUCCESSFUL ) );
-	}
-
 	public function mark_failed( int $id, ?string $raw_webhook_payload = null ): bool {
 		$data = array( 'status' => self::STATUS_FAILED );
 
@@ -99,7 +95,39 @@ final class GatewayTransaction extends AbstractRepository {
 		return $this->update( $id, $data );
 	}
 
-	public function mark_expired( int $id ): bool {
-		return $this->update( $id, array( 'status' => self::STATUS_EXPIRED ) );
+	/**
+	 * Atomically transitions a transaction to $new_status only if it is
+	 * not already resolved — the DB-level guard behind
+	 * GatewayPaymentService's idempotent settle_*()/expire() methods. A
+	 * plain find()-then-update() leaves a check-then-act race open between
+	 * two near-simultaneous callers for the same transaction (Nylon Pay's
+	 * webhook delivery is at-least-once, and the hourly reconciliation
+	 * sweep can race a late-arriving webhook) — this single UPDATE is
+	 * atomic per-row at the MySQL level, so only one caller can ever win it.
+	 *
+	 * @return bool true if this call performed the transition (caller may
+	 *              proceed to record the payment), false if another caller
+	 *              already resolved it first.
+	 */
+	public function claim_for_settlement( int $id, string $new_status ): bool {
+		global $wpdb;
+
+		$table = $this->table_name();
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only, not user input.
+				"UPDATE {$table} SET status = %s, updated_at = %s WHERE id = %d AND status NOT IN (%s,%s,%s,%s)",
+				$new_status,
+				current_time( 'mysql' ),
+				$id,
+				self::STATUS_SUCCESSFUL,
+				self::STATUS_FAILED,
+				self::STATUS_CANCELLED,
+				self::STATUS_EXPIRED
+			)
+		);
+
+		return is_int( $updated ) && $updated > 0;
 	}
 }
