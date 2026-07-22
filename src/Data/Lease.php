@@ -11,13 +11,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Leases.
  *
- * Enforces SPEC.md §4.1's core invariant here at the data layer (not just
- * the UI): a unit can never have two simultaneously active leases.
- * create() and activate() both check active_lease_for_unit() and throw
- * DuplicateActiveLeaseException rather than silently allowing the
+ * Enforces SPEC.md §3.3's capacity invariant at the data layer (not just
+ * the UI): a unit's active-lease count can never exceed `rm_units.capacity`
+ * (default 1, which reproduces v1's original "never two simultaneously
+ * active leases" rule exactly). create() and change_status() both check
+ * this via guard_against_capacity_exceeded() and throw
+ * CapacityExceededException (a DuplicateActiveLeaseException, so v1 catch
+ * sites keep working unchanged) rather than silently allowing the
  * conflicting row.
+ *
+ * The guard/count/insert sequence is wrapped in a MySQL named lock
+ * (GET_LOCK/RELEASE_LOCK) keyed per unit, not a SQL transaction — this
+ * plugin has no reliable way to detect whether a caller (or the
+ * integration test harness) already has an open transaction, and issuing
+ * a second `START TRANSACTION` while one is already open silently commits
+ * the outer one, which would be a far worse bug than the race this guard
+ * closes. A named lock is independent of transaction state and serializes
+ * concurrent capacity checks for the same unit regardless of what
+ * transaction (if any) the caller is in.
  */
 final class Lease extends AbstractRepository {
+
+	public const CYCLE_MONTHLY   = 'monthly';
+	public const CYCLE_QUARTERLY = 'quarterly';
+	public const CYCLE_SEMESTER  = 'semester';
+	public const CYCLE_ANNUAL    = 'annual';
+	public const CYCLE_CUSTOM    = 'custom';
+
+	public const CYCLE_MONTHS_MIN = 1;
+	public const CYCLE_MONTHS_MAX = 24;
 
 	use SoftDeletes {
 		soft_delete as private trait_soft_delete;
@@ -38,15 +60,15 @@ final class Lease extends AbstractRepository {
 	/**
 	 * @param array<string,mixed> $data
 	 *
-	 * @throws DuplicateActiveLeaseException if $data['unit_id'] already has
-	 *                                        an active lease and status is
-	 *                                        (or defaults to) 'active'.
+	 * @throws CapacityExceededException if $data['unit_id'] is already at
+	 *                                    capacity and status is (or
+	 *                                    defaults to) 'active'.
 	 */
 	public function create( array $data ): int {
 		$status = $data['status'] ?? self::STATUS_ACTIVE;
 
 		if ( self::STATUS_ACTIVE === $status ) {
-			$this->guard_against_duplicate_active_lease( (int) $data['unit_id'] );
+			$this->guard_against_capacity_exceeded( (int) $data['unit_id'] );
 		}
 
 		$data['status'] = $status;
@@ -68,7 +90,7 @@ final class Lease extends AbstractRepository {
 	 * whenever a lease's status is changing, so the invariant is checked
 	 * and the unit's derived status stays in sync.
 	 *
-	 * @throws DuplicateActiveLeaseException
+	 * @throws CapacityExceededException
 	 */
 	public function change_status( int $lease_id, string $new_status ): bool {
 		$lease = $this->find( $lease_id );
@@ -78,7 +100,7 @@ final class Lease extends AbstractRepository {
 		}
 
 		if ( self::STATUS_ACTIVE === $new_status ) {
-			$this->guard_against_duplicate_active_lease( (int) $lease['unit_id'], $lease_id );
+			$this->guard_against_capacity_exceeded( (int) $lease['unit_id'], $lease_id );
 		}
 
 		$result = $this->update( $lease_id, array( 'status' => $new_status ) );
@@ -115,6 +137,20 @@ final class Lease extends AbstractRepository {
 	 * @return array<string,mixed>|null
 	 */
 	public function active_lease_for_unit( int $unit_id, ?int $exclude_lease_id = null ): ?array {
+		$matches = $this->active_leases_for_unit( $unit_id, $exclude_lease_id );
+
+		return $matches[0] ?? null;
+	}
+
+	/**
+	 * Every currently active lease on a unit — the capacity guard's count
+	 * source (v1's active_lease_for_unit() only needed existence, v2's
+	 * capacity check needs the count and, when over capacity, the full list
+	 * of conflicting lease ids for the error message).
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function active_leases_for_unit( int $unit_id, ?int $exclude_lease_id = null ): array {
 		$table = $this->table_name();
 
 		$sql    = "SELECT * FROM {$table} WHERE unit_id = %d AND status = %s AND deleted_at IS NULL";
@@ -125,10 +161,18 @@ final class Lease extends AbstractRepository {
 			$params[] = $exclude_lease_id;
 		}
 
-		$sql .= ' LIMIT 1';
-
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only.
-		return $this->row( $sql, $params );
+		return $this->results( $sql, $params );
+	}
+
+	/**
+	 * Count of currently active leases on a unit — used both by the
+	 * capacity guard here and, in a later phase, by unit-capacity-edit
+	 * validation (SPEC.md §4.1: "reducing capacity below the current
+	 * active-lease count is blocked").
+	 */
+	public function count_active_for_unit( int $unit_id, ?int $exclude_lease_id = null ): int {
+		return count( $this->active_leases_for_unit( $unit_id, $exclude_lease_id ) );
 	}
 
 	/**
@@ -226,13 +270,40 @@ final class Lease extends AbstractRepository {
 	}
 
 	/**
-	 * @throws DuplicateActiveLeaseException
+	 * Serializes the count-then-insert sequence per unit via a MySQL named
+	 * lock (see class doc comment for why this is a named lock and not a
+	 * SQL transaction), so two concurrent requests can't both observe
+	 * "capacity not yet reached" and both insert the (capacity+1)th active
+	 * lease.
+	 *
+	 * @throws CapacityExceededException
 	 */
-	private function guard_against_duplicate_active_lease( int $unit_id, ?int $exclude_lease_id = null ): void {
-		$conflict = $this->active_lease_for_unit( $unit_id, $exclude_lease_id );
+	private function guard_against_capacity_exceeded( int $unit_id, ?int $exclude_lease_id = null ): void {
+		$wpdb      = $this->wpdb();
+		$lock_name = "rm_lease_capacity_unit_{$unit_id}";
 
-		if ( null !== $conflict ) {
-			throw new DuplicateActiveLeaseException( (int) $conflict['id'] );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared below via placeholders.
+		$acquired = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) );
+
+		if ( 1 !== $acquired ) {
+			throw new \RuntimeException( 'Could not acquire the lease capacity lock for this unit; please try again.' );
+		}
+
+		try {
+			$unit     = $this->units->find( $unit_id );
+			$capacity = null === $unit ? 1 : max( 1, (int) $unit['capacity'] );
+			$active   = $this->active_leases_for_unit( $unit_id, $exclude_lease_id );
+
+			if ( count( $active ) >= $capacity ) {
+				throw new CapacityExceededException(
+					$unit_id,
+					$capacity,
+					array_map( static fn( array $lease ): int => (int) $lease['id'], $active )
+				);
+			}
+		} finally {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared below via placeholders.
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 		}
 	}
 }

@@ -4,7 +4,9 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Cron;
 
+use ChrxRentalManager\Admin\StaffRolesController;
 use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Communications\Notifier;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\NotificationLog;
 use ChrxRentalManager\Data\Property;
@@ -40,6 +42,7 @@ final class RenewalReminder {
 	private PropertyLandlord $property_landlords;
 	private Tenant $tenants;
 	private NotificationLog $notifications;
+	private Notifier $notifier;
 
 	public function __construct(
 		?Lease $leases = null,
@@ -48,7 +51,8 @@ final class RenewalReminder {
 		?PropertyStaff $property_staff = null,
 		?PropertyLandlord $property_landlords = null,
 		?Tenant $tenants = null,
-		?NotificationLog $notifications = null
+		?NotificationLog $notifications = null,
+		?Notifier $notifier = null
 	) {
 		$this->leases             = $leases ?? new Lease();
 		$this->units              = $units ?? new Unit();
@@ -57,6 +61,7 @@ final class RenewalReminder {
 		$this->property_landlords = $property_landlords ?? new PropertyLandlord();
 		$this->tenants            = $tenants ?? new Tenant();
 		$this->notifications      = $notifications ?? new NotificationLog();
+		$this->notifier           = $notifier ?? new Notifier( $this->notifications );
 	}
 
 	/**
@@ -146,13 +151,35 @@ final class RenewalReminder {
 				continue;
 			}
 
-			$sent += $this->send_email( $user->user_email, $lease, $tenant, $unit, $property, $threshold, false );
-			$this->notifications->record( $type, $user->user_email, (int) $lease['id'] );
+			$sent += $this->send_email(
+				array(
+					'email'           => $user->user_email,
+					'whatsapp_number' => get_user_meta( $user->ID, StaffRolesController::WHATSAPP_META_KEY, true ),
+				),
+				$lease,
+				$tenant,
+				$unit,
+				$property,
+				$threshold,
+				false,
+				$type
+			);
 		}
 
 		if ( Settings::reminder_notify_tenant() && null !== $tenant && '' !== (string) $tenant['email'] ) {
-			$sent += $this->send_email( $tenant['email'], $lease, $tenant, $unit, $property, $threshold, true );
-			$this->notifications->record( $type, $tenant['email'], (int) $lease['id'] );
+			$sent += $this->send_email(
+				array(
+					'email'           => $tenant['email'],
+					'whatsapp_number' => $tenant['whatsapp_number'] ?? '',
+				),
+				$lease,
+				$tenant,
+				$unit,
+				$property,
+				$threshold,
+				true,
+				$type
+			);
 		}
 
 		if ( array() === $recipients && ( ! Settings::reminder_notify_tenant() || null === $tenant ) ) {
@@ -166,15 +193,17 @@ final class RenewalReminder {
 	}
 
 	/**
-	 * @param array<string,mixed>  $lease
+	 * @param array<string,mixed>      $recipient ['email' => string, 'whatsapp_number' => string]
+	 * @param array<string,mixed>      $lease
 	 * @param array<string,mixed>|null $tenant
 	 * @param array<string,mixed>|null $unit
 	 * @param array<string,mixed>|null $property
 	 */
-	private function send_email( string $to, array $lease, ?array $tenant, ?array $unit, ?array $property, int $threshold, bool $is_tenant_copy ): int {
+	private function send_email( array $recipient, array $lease, ?array $tenant, ?array $unit, ?array $property, int $threshold, bool $is_tenant_copy, string $type ): int {
 		$tenant_name   = null === $tenant ? '' : $tenant['full_name'];
 		$unit_label    = null === $unit ? '' : $unit['unit_label'];
 		$property_name = null === $property ? '' : $property['name'];
+		$end_date      = gmdate( 'j F Y', strtotime( $lease['end_date'] ) );
 
 		$subject = sprintf(
 			/* translators: 1: days, 2: tenant name */
@@ -188,7 +217,7 @@ final class RenewalReminder {
 				/* translators: 1: days, 2: end date */
 				__( "Your lease is expiring in %1\$d days, on %2\$s. Please contact your property manager if you'd like to discuss renewal.", 'chrx-rental-manager' ),
 				$threshold,
-				gmdate( 'j F Y', strtotime( $lease['end_date'] ) )
+				$end_date
 			)
 			: sprintf(
 				/* translators: 1: tenant name, 2: unit label, 3: property name, 4: days, 5: end date */
@@ -197,9 +226,26 @@ final class RenewalReminder {
 				$unit_label,
 				$property_name,
 				$threshold,
-				gmdate( 'j F Y', strtotime( $lease['end_date'] ) )
+				$end_date
 			);
 
-		return wp_mail( $to, $subject, $message ) ? 1 : 0;
+		// This method's int return (used only to accumulate a "how many
+		// sent" count for the cron's caller) previously came from
+		// wp_mail()'s own return regardless of what NotificationLog
+		// recorded; the v1 code recorded STATUS_SENT unconditionally
+		// instead, a pre-existing bug — Notifier::notify() below now logs
+		// the real per-channel result, so this return value and the logged
+		// status finally agree.
+		$sent = $this->notifier->notify(
+			$type,
+			(int) $lease['id'],
+			$recipient,
+			$subject,
+			$message,
+			Settings::TEMPLATE_KEY_RENEWAL_REMINDER,
+			array( $tenant_name, $unit_label, $property_name, (string) $threshold, $end_date )
+		);
+
+		return $sent ? 1 : 0;
 	}
 }

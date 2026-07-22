@@ -36,6 +36,15 @@ final class RoleManager {
 	public const CAP_MANAGE_TENANTS    = 'rm_manage_tenants';
 	public const CAP_MANAGE_LEASES     = 'rm_manage_leases';
 	public const CAP_MANAGE_PAYMENTS   = 'rm_manage_payments';
+	public const CAP_MANAGE_EXPENSES   = 'rm_manage_expenses';
+	public const CAP_MANAGE_ALERTS     = 'rm_manage_alerts';
+
+	// v2 (SPEC.md §2/§4.8): the Landlord-Owner's single write capability —
+	// custom alerts on their own properties only. Deliberately its own
+	// constant, not CAP_MANAGE_ALERTS, so Access-layer property scoping is
+	// the only thing standing between a landlord and every other owner's
+	// alerts (a landlord is never granted the Staff-wide capability).
+	public const CAP_MANAGE_OWN_ALERTS = 'rm_manage_own_alerts';
 
 	// Read-only caps.
 	public const CAP_VIEW_DASHBOARD  = 'rm_view_dashboard';
@@ -70,14 +79,21 @@ final class RoleManager {
 				self::CAP_MANAGE_TENANTS,
 				self::CAP_MANAGE_LEASES,
 				self::CAP_MANAGE_PAYMENTS,
+				self::CAP_MANAGE_EXPENSES,
+				self::CAP_MANAGE_ALERTS,
 				self::CAP_VIEW_DASHBOARD,
 				self::CAP_VIEW_REPORTS,
 			),
+			// v2 (SPEC.md §2): "Landlord-Owner remains read-only for all
+			// financial and tenancy data. The single exception is custom
+			// alerts." CAP_MANAGE_OWN_ALERTS is the only write capability
+			// this role ever gets.
 			self::ROLE_LANDLORD_OWNER => array(
 				'read',
 				self::CAP_VIEW_DASHBOARD,
 				self::CAP_VIEW_REPORTS,
 				self::CAP_VIEW_STATEMENTS,
+				self::CAP_MANAGE_OWN_ALERTS,
 			),
 			self::ROLE_TENANT         => array(
 				self::CAP_VIEW_PORTAL,
@@ -101,6 +117,9 @@ final class RoleManager {
 			self::CAP_MANAGE_TENANTS,
 			self::CAP_MANAGE_LEASES,
 			self::CAP_MANAGE_PAYMENTS,
+			self::CAP_MANAGE_EXPENSES,
+			self::CAP_MANAGE_ALERTS,
+			self::CAP_MANAGE_OWN_ALERTS,
 			self::CAP_VIEW_DASHBOARD,
 			self::CAP_VIEW_REPORTS,
 			self::CAP_VIEW_STATEMENTS,

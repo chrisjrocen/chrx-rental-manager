@@ -4,11 +4,14 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Billing;
 
+use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Communications\Notifier;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\NotificationLog;
 use ChrxRentalManager\Data\Payment;
 use ChrxRentalManager\Data\Receipt;
 use ChrxRentalManager\Data\Tenant;
+use ChrxRentalManager\Portal\PortalReceiptDownload;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -16,10 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Emails the generated PDF receipt to the tenant on file (SPEC.md §4.3/§5:
- * "Receipt generated → Tenant → Email (PDF attached)"), logging every
- * attempt to rm_notifications_log — including the "tenant has no email"
- * case, which is a skip, not a failure, so support can see why a
- * particular tenant never got a receipt without it looking like a bug.
+ * "Receipt generated → Tenant → Email (PDF attached) + WhatsApp (receipt
+ * link)"), logging every attempt to rm_notifications_log — including the
+ * "tenant has no email" case, which is a skip, not a failure, so support
+ * can see why a particular tenant never got a receipt without it looking
+ * like a bug. v2: dispatches through Notifier (SPEC.md §10 item 12) so a
+ * tenant with a WhatsApp number on file also gets the receipt link there;
+ * WhatsApp is additive and never affects this method's return value.
  */
 final class ReceiptMailer {
 
@@ -29,6 +35,7 @@ final class ReceiptMailer {
 	private ReceiptPdf $receipt_pdf;
 	private Receipt $receipts;
 	private NotificationLog $notifications;
+	private Notifier $notifier;
 
 	public function __construct(
 		?Payment $payments = null,
@@ -36,7 +43,8 @@ final class ReceiptMailer {
 		?Tenant $tenants = null,
 		?ReceiptPdf $receipt_pdf = null,
 		?Receipt $receipts = null,
-		?NotificationLog $notifications = null
+		?NotificationLog $notifications = null,
+		?Notifier $notifier = null
 	) {
 		$this->payments      = $payments ?? new Payment();
 		$this->leases        = $leases ?? new Lease();
@@ -44,6 +52,7 @@ final class ReceiptMailer {
 		$this->receipt_pdf   = $receipt_pdf ?? new ReceiptPdf();
 		$this->receipts      = $receipts ?? new Receipt();
 		$this->notifications = $notifications ?? new NotificationLog();
+		$this->notifier      = $notifier ?? new Notifier( $this->notifications );
 	}
 
 	/**
@@ -86,18 +95,27 @@ final class ReceiptMailer {
 			$receipt['receipt_number']
 		);
 
-		$sent = wp_mail( $tenant['email'], $subject, $message, array(), file_exists( $absolute_path ) ? array( $absolute_path ) : array() );
+		$sent = $this->notifier->notify(
+			'receipt_emailed',
+			(int) $receipt['id'],
+			array(
+				'email'           => $tenant['email'],
+				'whatsapp_number' => $tenant['whatsapp_number'] ?? '',
+			),
+			$subject,
+			$message,
+			Settings::TEMPLATE_KEY_PAYMENT_RECEIVED,
+			array(
+				explode( ' ', trim( (string) $tenant['full_name'] ) )[0] ?? $tenant['full_name'],
+				$receipt['receipt_number'],
+				PortalReceiptDownload::download_url( (int) $receipt['id'] ),
+			),
+			file_exists( $absolute_path ) ? array( $absolute_path ) : array()
+		);
 
 		if ( $sent ) {
 			$this->receipts->mark_emailed( (int) $receipt['id'] );
 		}
-
-		$this->notifications->record(
-			'receipt_emailed',
-			$tenant['email'],
-			(int) $receipt['id'],
-			$sent ? NotificationLog::STATUS_SENT : NotificationLog::STATUS_FAILED
-		);
 
 		return $sent;
 	}

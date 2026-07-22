@@ -10,6 +10,7 @@ use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Data\Tenant;
 use ChrxRentalManager\Data\Unit;
+use ChrxRentalManager\Data\UnitAmenity;
 use ChrxRentalManager\Roles\Access;
 use ChrxRentalManager\Roles\RoleManager;
 
@@ -40,6 +41,7 @@ final class UnitsController {
 	private Tenant $tenants;
 	private Document $documents;
 	private Access $access;
+	private UnitAmenity $amenities;
 
 	public function __construct(
 		?Unit $units = null,
@@ -47,7 +49,8 @@ final class UnitsController {
 		?Lease $leases = null,
 		?Tenant $tenants = null,
 		?Document $documents = null,
-		?Access $access = null
+		?Access $access = null,
+		?UnitAmenity $amenities = null
 	) {
 		$this->units      = $units ?? new Unit();
 		$this->properties = $properties ?? new Property();
@@ -55,6 +58,7 @@ final class UnitsController {
 		$this->tenants    = $tenants ?? new Tenant();
 		$this->documents  = $documents ?? new Document();
 		$this->access     = $access ?? new Access();
+		$this->amenities  = $amenities ?? new UnitAmenity();
 	}
 
 	public function register(): void {
@@ -157,6 +161,7 @@ final class UnitsController {
 		);
 		$can_manage = current_user_can( RoleManager::CAP_MANAGE_UNITS );
 		$is_empty   = 0 === $list_table->get_pagination_arg( 'total_items' );
+		$all_tags   = $this->amenities->distinct_tags();
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/units-list.php';
 	}
@@ -200,8 +205,10 @@ final class UnitsController {
 			$lease_history
 		);
 
-		$documents  = $this->documents->for_entity( Document::ENTITY_UNIT, $unit_id );
-		$can_manage = current_user_can( RoleManager::CAP_MANAGE_UNITS ) && $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] );
+		$documents          = $this->documents->for_entity( Document::ENTITY_UNIT, $unit_id );
+		$can_manage         = current_user_can( RoleManager::CAP_MANAGE_UNITS ) && $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] );
+		$active_lease_count = $this->leases->count_active_for_unit( $unit_id );
+		$unit_amenities     = $this->amenities->for_unit( $unit_id );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/unit-detail.php';
 	}
@@ -233,7 +240,10 @@ final class UnitsController {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pre-fill param, no state change.
 		$preselected_property_id = isset( $_GET['property_id'] ) ? absint( $_GET['property_id'] ) : 0;
 
-		$list_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$list_url           = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+		$current_tags       = 0 === $unit_id ? array() : array_column( $this->amenities->for_unit( $unit_id ), 'tag' );
+		$all_tags           = $this->amenities->distinct_tags();
+		$active_lease_count = 0 === $unit_id ? 0 : $this->leases->count_active_for_unit( $unit_id );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/unit-form.php';
 	}
@@ -255,6 +265,15 @@ final class UnitsController {
 		$status = isset( $_POST['rm_status'] ) ? sanitize_key( wp_unslash( $_POST['rm_status'] ) ) : Unit::STATUS_VACANT;
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$notes = isset( $_POST['rm_notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['rm_notes'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$occupancy_type = isset( $_POST['rm_occupancy_type'] ) ? sanitize_key( wp_unslash( $_POST['rm_occupancy_type'] ) ) : Unit::OCCUPANCY_SINGLE;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$self_contained = ! empty( $_POST['rm_self_contained'] );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$capacity = isset( $_POST['rm_capacity'] ) ? absint( $_POST['rm_capacity'] ) : 1;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$tags_raw = isset( $_POST['rm_amenity_tags'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_amenity_tags'] ) ) : '';
+		$tags     = array_filter( array_map( 'trim', explode( ',', $tags_raw ) ) );
 
 		$back_to_form = add_query_arg(
 			array(
@@ -265,10 +284,11 @@ final class UnitsController {
 			admin_url( 'admin.php' )
 		);
 
-		$valid_statuses = array( Unit::STATUS_VACANT, Unit::STATUS_OCCUPIED, Unit::STATUS_MAINTENANCE, Unit::STATUS_RESERVED );
+		$valid_statuses        = array( Unit::STATUS_VACANT, Unit::STATUS_OCCUPIED, Unit::STATUS_MAINTENANCE, Unit::STATUS_BOOKED );
+		$valid_occupancy_types = array( Unit::OCCUPANCY_SINGLE, Unit::OCCUPANCY_DOUBLE, Unit::OCCUPANCY_FAMILY );
 
-		if ( '' === $unit_label || 0 === $property_id || ! in_array( $status, $valid_statuses, true ) ) {
-			FlashNotice::set( 'units', __( 'Please fill in the property and unit label.', 'chrx-rental-manager' ) );
+		if ( '' === $unit_label || 0 === $property_id || ! in_array( $status, $valid_statuses, true ) || ! in_array( $occupancy_type, $valid_occupancy_types, true ) || $capacity < 1 ) {
+			FlashNotice::set( 'units', __( 'Please fill in the property, unit label, and a capacity of at least 1.', 'chrx-rental-manager' ) );
 			wp_safe_redirect( $back_to_form );
 			exit;
 		}
@@ -277,13 +297,25 @@ final class UnitsController {
 			wp_die( esc_html__( 'You do not have permission to manage units on this property.', 'chrx-rental-manager' ), 403 );
 		}
 
+		// SPEC.md §4.1 edge case: "Reducing capacity below the current
+		// active-lease count: blocked until leases are ended." — surfaces
+		// the guard V2-0's Lease::count_active_for_unit() exists for.
+		if ( $unit_id > 0 && $capacity < $this->leases->count_active_for_unit( $unit_id ) ) {
+			FlashNotice::set( 'units', __( 'Capacity cannot be reduced below the number of currently active leases on this unit. End a lease first.', 'chrx-rental-manager' ) );
+			wp_safe_redirect( $back_to_form );
+			exit;
+		}
+
 		$data = array(
-			'property_id' => $property_id,
-			'unit_label'  => $unit_label,
-			'bedrooms'    => $bedrooms,
-			'rent_amount' => $rent_amount,
-			'status'      => $status,
-			'notes'       => $notes,
+			'property_id'    => $property_id,
+			'unit_label'     => $unit_label,
+			'bedrooms'       => $bedrooms,
+			'rent_amount'    => $rent_amount,
+			'status'         => $status,
+			'notes'          => $notes,
+			'occupancy_type' => $occupancy_type,
+			'self_contained' => $self_contained ? 1 : 0,
+			'capacity'       => $capacity,
 		);
 
 		if ( 0 === $unit_id ) {
@@ -291,6 +323,8 @@ final class UnitsController {
 		} else {
 			$this->units->update( $unit_id, $data );
 		}
+
+		$this->amenities->sync_for_unit( $unit_id, $tags );
 
 		FlashNotice::set( 'units', __( 'Unit saved.', 'chrx-rental-manager' ) );
 		wp_safe_redirect(

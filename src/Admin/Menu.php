@@ -24,6 +24,8 @@ final class Menu {
 	private LeasesController $leases_controller;
 	private DocumentsController $documents_controller;
 	private PaymentsController $payments_controller;
+	private ExpensesController $expenses_controller;
+	private AlertsController $alerts_controller;
 	private DashboardController $dashboard_controller;
 	private ReportsController $reports_controller;
 	private StatementsController $statements_controller;
@@ -38,6 +40,8 @@ final class Menu {
 		?LeasesController $leases_controller = null,
 		?DocumentsController $documents_controller = null,
 		?PaymentsController $payments_controller = null,
+		?ExpensesController $expenses_controller = null,
+		?AlertsController $alerts_controller = null,
 		?DashboardController $dashboard_controller = null,
 		?ReportsController $reports_controller = null,
 		?StatementsController $statements_controller = null,
@@ -51,6 +55,8 @@ final class Menu {
 		$this->leases_controller      = $leases_controller ?? new LeasesController();
 		$this->documents_controller   = $documents_controller ?? new DocumentsController();
 		$this->payments_controller    = $payments_controller ?? new PaymentsController();
+		$this->expenses_controller    = $expenses_controller ?? new ExpensesController();
+		$this->alerts_controller      = $alerts_controller ?? new AlertsController();
 		$this->dashboard_controller   = $dashboard_controller ?? new DashboardController();
 		$this->reports_controller     = $reports_controller ?? new ReportsController();
 		$this->statements_controller  = $statements_controller ?? new StatementsController();
@@ -68,6 +74,8 @@ final class Menu {
 		$this->leases_controller->register();
 		$this->documents_controller->register();
 		$this->payments_controller->register();
+		$this->expenses_controller->register();
+		$this->alerts_controller->register();
 		$this->reports_controller->register();
 		$this->statements_controller->register();
 		$this->settings_controller->register();
@@ -136,6 +144,33 @@ final class Menu {
 			RoleManager::CAP_VIEW_DASHBOARD,
 			PaymentsController::page_slug(),
 			array( $this->payments_controller, 'render' )
+		);
+
+		add_submenu_page(
+			'chrx-rental-manager',
+			__( 'Expenses', 'chrx-rental-manager' ),
+			__( 'Expenses', 'chrx-rental-manager' ),
+			RoleManager::CAP_MANAGE_EXPENSES,
+			ExpensesController::page_slug(),
+			array( $this->expenses_controller, 'render' )
+		);
+
+		add_submenu_page(
+			'chrx-rental-manager',
+			__( 'Custom Alerts', 'chrx-rental-manager' ),
+			__( 'Custom Alerts', 'chrx-rental-manager' ),
+			// CAP_VIEW_DASHBOARD, not CAP_MANAGE_ALERTS: both Staff and
+			// Landlord-Owner must reach this screen, but WP's
+			// add_submenu_page() only accepts one capability slot, and
+			// Landlord-Owner never holds CAP_MANAGE_ALERTS (SPEC.md §2's
+			// "single write capability" is CAP_MANAGE_OWN_ALERTS, checked
+			// only inside AlertsController itself). Both roles already
+			// hold CAP_VIEW_DASHBOARD, so this only gates "can reach
+			// wp-admin at all," identical to how Units/Leases/etc. gate
+			// their own submenu entries.
+			RoleManager::CAP_VIEW_DASHBOARD,
+			AlertsController::page_slug(),
+			array( $this->alerts_controller, 'render' )
 		);
 
 		add_submenu_page(

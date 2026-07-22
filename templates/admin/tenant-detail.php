@@ -85,6 +85,17 @@ foreach ( array_slice( explode( ' ', trim( $tenant['full_name'] ) ), 0, 2 ) as $
 				</div>
 			</div>
 
+			<?php if ( '' !== (string) ( $tenant['next_of_kin_name'] ?? '' ) ) : ?>
+				<div class="chrx-rm-panel">
+					<div class="chrx-rm-panel__header"><?php esc_html_e( 'Next of kin', 'chrx-rental-manager' ); ?></div>
+					<div class="chrx-rm-panel__body" style="display:flex;flex-direction:column;gap:11px;font-size:13px;">
+						<div><div style="color:#646970;font-size:11px;text-transform:uppercase;margin-bottom:2px;"><?php esc_html_e( 'Name', 'chrx-rental-manager' ); ?></div><?php echo esc_html( $tenant['next_of_kin_name'] ); ?></div>
+						<div><div style="color:#646970;font-size:11px;text-transform:uppercase;margin-bottom:2px;"><?php esc_html_e( 'Phone', 'chrx-rental-manager' ); ?></div><?php echo esc_html( '' !== (string) ( $tenant['next_of_kin_phone'] ?? '' ) ? $tenant['next_of_kin_phone'] : '—' ); ?></div>
+						<div><div style="color:#646970;font-size:11px;text-transform:uppercase;margin-bottom:2px;"><?php esc_html_e( 'Relationship', 'chrx-rental-manager' ); ?></div><?php echo esc_html( '' !== (string) ( $tenant['next_of_kin_relationship'] ?? '' ) ? $tenant['next_of_kin_relationship'] : '—' ); ?></div>
+					</div>
+				</div>
+			<?php endif; ?>
+
 			<div style="background:#e4eefa;border:1px solid #b9d3ef;border-radius:6px;padding:18px;margin-bottom:18px;">
 				<div style="font-weight:700;font-size:14px;margin-bottom:6px;"><?php esc_html_e( 'Portal access', 'chrx-rental-manager' ); ?></div>
 				<div style="margin-bottom:12px;">

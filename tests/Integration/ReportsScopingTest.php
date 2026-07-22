@@ -6,7 +6,9 @@ namespace ChrxRentalManager\Tests\Integration;
 
 use ChrxRentalManager\Admin\Support\Reports;
 use ChrxRentalManager\Data\Charge;
+use ChrxRentalManager\Data\Expense;
 use ChrxRentalManager\Data\Lease;
+use ChrxRentalManager\Data\MoveOutNotice;
 use ChrxRentalManager\Data\Payment;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Data\PropertyLandlord;
@@ -33,6 +35,8 @@ final class ReportsScopingTest extends IntegrationTestCase {
 	private int $landlord_b;
 	private int $lease_a;
 	private int $lease_b;
+	private int $account_expense;
+	private int $property_a_expense;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -121,6 +125,34 @@ final class ReportsScopingTest extends IntegrationTestCase {
 			'recorded_by'    => 1,
 			'receipt_id'     => null,
 			'paid_at'        => current_time( 'mysql' ),
+		] );
+
+		$expenses               = new Expense();
+		$this->account_expense   = $expenses->insert( [
+			'scope'                 => Expense::SCOPE_ACCOUNT,
+			'property_id'           => null,
+			'unit_id'               => null,
+			'category'              => Expense::CATEGORY_TAX,
+			'custom_category_label' => null,
+			'amount'                => 100,
+			'expense_date'          => current_time( 'Y-m-d' ),
+			'description'           => '',
+			'recurring'             => Expense::RECURRING_NONE,
+			'recurring_parent_id'   => null,
+			'recorded_by'           => 1,
+		] );
+		$this->property_a_expense = $expenses->insert( [
+			'scope'                 => Expense::SCOPE_PROPERTY,
+			'property_id'           => $this->property_a,
+			'unit_id'               => null,
+			'category'              => Expense::CATEGORY_WATER,
+			'custom_category_label' => null,
+			'amount'                => 50,
+			'expense_date'          => current_time( 'Y-m-d' ),
+			'description'           => '',
+			'recurring'             => Expense::RECURRING_NONE,
+			'recurring_parent_id'   => null,
+			'recorded_by'           => 1,
 		] );
 	}
 
@@ -251,5 +283,78 @@ final class ReportsScopingTest extends IntegrationTestCase {
 	public function test_landlord_b_is_blocked_from_landlord_as_property_for_statement_downloads(): void {
 		$this->assertFalse( $this->access->userCanAccessProperty( $this->landlord_b, $this->property_a ) );
 		$this->assertTrue( $this->access->userCanAccessProperty( $this->landlord_a, $this->property_a ) );
+	}
+
+	/**
+	 * v2 (SPEC.md §4.4): "account-scoped expenses appear only on
+	 * admin-level reports" — a restricted (Staff/Landlord) scope must never
+	 * see the account-wide expense, only the property-scoped one on their
+	 * own property.
+	 */
+	public function test_expenses_in_scope_excludes_account_scoped_for_a_restricted_caller(): void {
+		$scope_a = $this->scope_for( $this->landlord_a );
+		$rows    = $this->reports->expenses_in_scope( $scope_a, current_time( 'Y-m-01' ), gmdate( 'Y-m-t' ) );
+
+		$ids = array_map( static fn( array $row ): int => (int) $row['id'], $rows );
+
+		$this->assertContains( $this->property_a_expense, $ids );
+		$this->assertNotContains( $this->account_expense, $ids, 'Account-scoped expenses must never appear in a restricted caller\'s scope.' );
+	}
+
+	public function test_expenses_in_scope_includes_account_scoped_for_administrator_null_scope(): void {
+		$rows = $this->reports->expenses_in_scope( null, current_time( 'Y-m-01' ), gmdate( 'Y-m-t' ) );
+		$ids  = array_map( static fn( array $row ): int => (int) $row['id'], $rows );
+
+		$this->assertContains( $this->account_expense, $ids );
+		$this->assertContains( $this->property_a_expense, $ids );
+	}
+
+	public function test_expenses_in_scope_never_leaks_another_owners_property_expense(): void {
+		$scope_b = $this->scope_for( $this->landlord_b );
+		$rows    = $this->reports->expenses_in_scope( $scope_b, current_time( 'Y-m-01' ), gmdate( 'Y-m-t' ) );
+		$ids     = array_map( static fn( array $row ): int => (int) $row['id'], $rows );
+
+		$this->assertNotContains( $this->property_a_expense, $ids );
+	}
+
+	public function test_monthly_expense_total_is_scoped_like_every_other_report(): void {
+		$scope_a = $this->scope_for( $this->landlord_a );
+		$total   = $this->reports->monthly_expense_total( $scope_a );
+
+		$this->assertSame( 50.0, $total['total'], 'Only the property-scoped expense on landlord A\'s own property should count, not the account-wide one.' );
+		$this->assertSame( 1, $total['count'] );
+	}
+
+	public function test_net_income_subtracts_this_months_scoped_expenses_from_collected(): void {
+		$scope_a = $this->scope_for( $this->landlord_a );
+
+		$this->assertSame( 450.0, $this->reports->net_income( $scope_a ), '500 collected minus 50 in scoped expenses.' );
+	}
+
+	/**
+	 * v2 (SPEC.md §4.10/§5): the move-out-notice dashboard flag must obey
+	 * the same per-landlord scoping every other Reports method does.
+	 */
+	public function test_active_move_out_notices_never_leaks_another_owners_notice(): void {
+		$notices  = new MoveOutNotice();
+		$notice_a = $notices->insert( [
+			'lease_id'                => $this->lease_a,
+			'notice_date'             => current_time( 'Y-m-d' ),
+			'earliest_move_out_date'  => gmdate( 'Y-m-d', strtotime( current_time( 'Y-m-d' ) . ' +2 months' ) ),
+			'requested_move_out_date' => null,
+			'submitted_by'            => MoveOutNotice::SUBMITTED_BY_TENANT,
+			'submitted_by_user_id'    => 1,
+			'status'                  => MoveOutNotice::STATUS_ACTIVE,
+			'notes'                   => '',
+		] );
+
+		$scope_a = $this->scope_for( $this->landlord_a );
+		$scope_b = $this->scope_for( $this->landlord_b );
+
+		$ids_a = array_map( static fn( array $row ): int => (int) $row['id'], $this->reports->active_move_out_notices( $scope_a ) );
+		$ids_b = array_map( static fn( array $row ): int => (int) $row['id'], $this->reports->active_move_out_notices( $scope_b ) );
+
+		$this->assertContains( $notice_a, $ids_a );
+		$this->assertNotContains( $notice_a, $ids_b, 'Landlord B must never see landlord A\'s move-out notice.' );
 	}
 }

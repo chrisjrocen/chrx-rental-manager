@@ -10,6 +10,7 @@ use ChrxRentalManager\Data\Charge;
 use ChrxRentalManager\Data\Document;
 use ChrxRentalManager\Data\DuplicateActiveLeaseException;
 use ChrxRentalManager\Data\Lease;
+use ChrxRentalManager\Data\MoveOutNotice;
 use ChrxRentalManager\Data\Payment;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Data\Tenant;
@@ -48,9 +49,11 @@ final class LeasesController {
 	private Document $documents;
 	private Ledger $ledger;
 	private Access $access;
+	private MoveOutNotice $notices;
 	private LeaseRenewalController $renewal_controller;
 	private LeaseMoveOutController $move_out_controller;
 	private RecordPaymentController $record_payment_controller;
+	private StaffMoveOutNoticeController $staff_notice_controller;
 
 	public function __construct(
 		?Lease $leases = null,
@@ -62,9 +65,11 @@ final class LeasesController {
 		?Document $documents = null,
 		?Ledger $ledger = null,
 		?Access $access = null,
+		?MoveOutNotice $notices = null,
 		?LeaseRenewalController $renewal_controller = null,
 		?LeaseMoveOutController $move_out_controller = null,
-		?RecordPaymentController $record_payment_controller = null
+		?RecordPaymentController $record_payment_controller = null,
+		?StaffMoveOutNoticeController $staff_notice_controller = null
 	) {
 		$this->units      = $units ?? new Unit();
 		$this->leases     = $leases ?? new Lease( $this->units );
@@ -75,10 +80,12 @@ final class LeasesController {
 		$this->documents  = $documents ?? new Document();
 		$this->ledger     = $ledger ?? new Ledger( $this->charges, $this->payments, $this->leases );
 		$this->access     = $access ?? new Access();
+		$this->notices    = $notices ?? new MoveOutNotice();
 
 		$this->renewal_controller        = $renewal_controller ?? new LeaseRenewalController( $this->leases, $this->units, $this->tenants, $this->access );
-		$this->move_out_controller       = $move_out_controller ?? new LeaseMoveOutController( $this->leases, $this->units, $this->tenants, $this->charges, $this->ledger, $this->access );
+		$this->move_out_controller       = $move_out_controller ?? new LeaseMoveOutController( $this->leases, $this->units, $this->tenants, $this->charges, $this->ledger, $this->access, null, $this->notices );
 		$this->record_payment_controller = $record_payment_controller ?? new RecordPaymentController( $this->leases, $this->units, $this->tenants, $this->charges, $this->payments, $this->ledger, $this->access );
+		$this->staff_notice_controller   = $staff_notice_controller ?? new StaffMoveOutNoticeController( $this->leases, $this->units, $this->notices, $this->access );
 	}
 
 	public function register(): void {
@@ -86,6 +93,7 @@ final class LeasesController {
 		$this->renewal_controller->register();
 		$this->move_out_controller->register();
 		$this->record_payment_controller->register();
+		$this->staff_notice_controller->register();
 	}
 
 	public function maybe_handle_action(): void {
@@ -264,6 +272,11 @@ final class LeasesController {
 		$documents  = $this->documents->for_entity( Document::ENTITY_LEASE, $lease_id );
 		$can_manage = current_user_can( RoleManager::CAP_MANAGE_LEASES ) && $this->access->userCanAccessProperty( get_current_user_id(), (int) $unit['property_id'] );
 
+		// v2 (SPEC.md §4.10): "The lease detail screen... show[s] active notices."
+		$active_notice = Lease::STATUS_ACTIVE === $lease['status']
+			? $this->notices->active_for_lease( $lease_id )
+			: null;
+
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/lease-detail.php';
 	}
 
@@ -326,6 +339,10 @@ final class LeasesController {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$billing_day = isset( $_POST['rm_billing_day'] ) ? absint( $_POST['rm_billing_day'] ) : 1;
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$billing_cycle = isset( $_POST['rm_billing_cycle'] ) ? sanitize_key( wp_unslash( $_POST['rm_billing_cycle'] ) ) : Lease::CYCLE_MONTHLY;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$custom_cycle_months = isset( $_POST['rm_custom_cycle_months'] ) ? absint( $_POST['rm_custom_cycle_months'] ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$start_date = isset( $_POST['rm_start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_start_date'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$end_date = isset( $_POST['rm_end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_end_date'] ) ) : '';
@@ -343,8 +360,13 @@ final class LeasesController {
 
 		$valid_dates = false !== strtotime( $start_date ) && false !== strtotime( $end_date ) && strtotime( $end_date ) > strtotime( $start_date );
 
-		if ( 0 === $unit_id || 0 === $tenant_id || $rent_amount <= 0 || ! $valid_dates ) {
-			FlashNotice::set( 'leases', __( 'Please fill in unit, tenant, rent, and a valid date range.', 'chrx-rental-manager' ) );
+		$valid_cycles = array( Lease::CYCLE_MONTHLY, Lease::CYCLE_QUARTERLY, Lease::CYCLE_SEMESTER, Lease::CYCLE_ANNUAL, Lease::CYCLE_CUSTOM );
+		$valid_cycle  = 0 !== $lease_id // Cycle is locked on edit — only validate it for new leases.
+			|| ( in_array( $billing_cycle, $valid_cycles, true )
+				&& ( Lease::CYCLE_CUSTOM !== $billing_cycle || ( $custom_cycle_months >= Lease::CYCLE_MONTHS_MIN && $custom_cycle_months <= Lease::CYCLE_MONTHS_MAX ) ) );
+
+		if ( 0 === $unit_id || 0 === $tenant_id || $rent_amount <= 0 || ! $valid_dates || ! $valid_cycle ) {
+			FlashNotice::set( 'leases', __( 'Please fill in unit, tenant, rent, a valid date range, and a valid billing cycle.', 'chrx-rental-manager' ) );
 			wp_safe_redirect( $back_to_form );
 			exit;
 		}
@@ -363,6 +385,16 @@ final class LeasesController {
 			'deposit_amount' => $deposit_amount,
 			'deposit_status' => $deposit_collected ? 'paid' : 'unpaid',
 		);
+
+		// SPEC.md §4.2 edge case: "cycle change mid-lease: not supported" —
+		// billing_cycle/cycle_months are only ever set at creation time; an
+		// edit's $data never includes them, so a crafted edit POST can't
+		// alter an existing lease's cycle even though the form hides these
+		// fields on edit.
+		if ( 0 === $lease_id ) {
+			$data['billing_cycle'] = $billing_cycle;
+			$data['cycle_months']  = self::resolve_cycle_months( $billing_cycle, $custom_cycle_months );
+		}
 
 		try {
 			if ( 0 === $lease_id ) {
@@ -394,6 +426,27 @@ final class LeasesController {
 			)
 		);
 		exit;
+	}
+
+	/**
+	 * Resolves a billing_cycle selection into a concrete cycle_months value
+	 * (SPEC.md §4.2: "'Semester' resolves to a configurable account-wide
+	 * setting... at lease creation, stored into cycle_months so later
+	 * settings changes don't rewrite existing leases").
+	 */
+	private static function resolve_cycle_months( string $billing_cycle, int $custom_cycle_months ): int {
+		switch ( $billing_cycle ) {
+			case Lease::CYCLE_QUARTERLY:
+				return 3;
+			case Lease::CYCLE_SEMESTER:
+				return \ChrxRentalManager\Admin\Support\Settings::semester_months();
+			case Lease::CYCLE_ANNUAL:
+				return 12;
+			case Lease::CYCLE_CUSTOM:
+				return min( Lease::CYCLE_MONTHS_MAX, max( Lease::CYCLE_MONTHS_MIN, $custom_cycle_months ) );
+			default:
+				return 1;
+		}
 	}
 
 	private function property_id_for_unit( int $unit_id ): int {

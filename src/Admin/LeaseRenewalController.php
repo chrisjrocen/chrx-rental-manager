@@ -153,6 +153,8 @@ final class LeaseRenewalController {
 					'end_date'          => $end_date,
 					'rent_amount'       => $rent_amount,
 					'billing_day'       => (int) $old_lease['billing_day'],
+					'billing_cycle'     => $old_lease['billing_cycle'] ?? Lease::CYCLE_MONTHLY,
+					'cycle_months'      => (int) ( $old_lease['cycle_months'] ?? 1 ),
 					'deposit_amount'    => $carry_over_deposit ? (float) $old_lease['deposit_amount'] : 0.0,
 					'deposit_status'    => $carry_over_deposit ? $old_lease['deposit_status'] : 'unpaid',
 					'auto_renewed_from' => $old_lease_id,

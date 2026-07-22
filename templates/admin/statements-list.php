@@ -3,7 +3,7 @@
  * "My statements" — Landlord-Owner, read-only (designs/28-landlord-reports-statement-download.html).
  *
  * Variables in scope: $rows (array<int,array{property:array,
- * period:array{from,to,label},summary:array{gross,fee_amount,net}}>).
+ * period:array{from,to,label},summary:array{gross,fee_amount,expenses,net}}>).
  *
  * @package ChrxRentalManager
  */

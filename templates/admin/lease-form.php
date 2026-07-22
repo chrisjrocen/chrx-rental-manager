@@ -19,6 +19,7 @@
  */
 
 use ChrxRentalManager\Admin\LeasesController;
+use ChrxRentalManager\Data\Lease;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,6 +33,16 @@ if ( ! in_array( $current_billing_day, $billing_days, true ) ) {
 	$billing_days[] = $current_billing_day;
 	sort( $billing_days );
 }
+
+$billing_cycle_labels  = array(
+	Lease::CYCLE_MONTHLY   => __( 'Monthly', 'chrx-rental-manager' ),
+	Lease::CYCLE_QUARTERLY => __( 'Quarterly (3 months)', 'chrx-rental-manager' ),
+	Lease::CYCLE_SEMESTER  => __( 'Semester', 'chrx-rental-manager' ),
+	Lease::CYCLE_ANNUAL    => __( 'Annual (12 months)', 'chrx-rental-manager' ),
+	Lease::CYCLE_CUSTOM    => __( 'Custom', 'chrx-rental-manager' ),
+);
+$current_billing_cycle = (string) ( $lease['billing_cycle'] ?? Lease::CYCLE_MONTHLY );
+$current_cycle_months  = (int) ( $lease['cycle_months'] ?? 1 );
 ?>
 <div class="wrap chrx-rm-admin">
 	<div class="chrx-rm-breadcrumb"><a href="<?php echo esc_url( $list_url ); ?>"><?php esc_html_e( 'Leases', 'chrx-rental-manager' ); ?></a> &rsaquo; <?php echo $is_edit ? esc_html__( 'Edit', 'chrx-rental-manager' ) : esc_html__( 'Add new', 'chrx-rental-manager' ); ?></div>
@@ -86,7 +97,7 @@ if ( ! in_array( $current_billing_day, $billing_days, true ) ) {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="rm_rent_amount"><?php esc_html_e( 'Monthly rent', 'chrx-rental-manager' ); ?></label></th>
+				<th><label for="rm_rent_amount"><?php esc_html_e( 'Rent per billing period', 'chrx-rental-manager' ); ?></label></th>
 				<td><input type="text" id="rm_rent_amount" name="rm_rent_amount" value="<?php echo esc_attr( (string) ( $lease['rent_amount'] ?? '' ) ); ?>" required></td>
 			</tr>
 			<tr>
@@ -100,6 +111,30 @@ if ( ! in_array( $current_billing_day, $billing_days, true ) ) {
 						<input type="checkbox" name="rm_deposit_collected" value="1" <?php checked( 'paid' === ( $lease['deposit_status'] ?? '' ) ); ?>>
 						<?php esc_html_e( 'Yes, held', 'chrx-rental-manager' ); ?>
 					</label>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="rm_billing_cycle"><?php esc_html_e( 'Billing cycle', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<?php if ( $is_edit ) : ?>
+						<p><?php echo esc_html( $billing_cycle_labels[ $current_billing_cycle ] ?? $current_billing_cycle ); ?><?php echo Lease::CYCLE_CUSTOM === $current_billing_cycle ? esc_html( ' — ' . sprintf( /* translators: %d: months */ __( 'every %d months', 'chrx-rental-manager' ), $current_cycle_months ) ) : ''; ?></p>
+						<p class="description"><?php esc_html_e( "A lease's billing cycle can't be changed after creation — end this lease and create a new one instead.", 'chrx-rental-manager' ); ?></p>
+					<?php else : ?>
+						<select id="rm_billing_cycle" name="rm_billing_cycle">
+							<?php foreach ( $billing_cycle_labels as $cycle_key => $cycle_label ) : ?>
+								<option value="<?php echo esc_attr( $cycle_key ); ?>" <?php selected( $current_billing_cycle, $cycle_key ); ?>><?php echo esc_html( $cycle_label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<span id="rm_custom_cycle_months_wrap" style="<?php echo Lease::CYCLE_CUSTOM === $current_billing_cycle ? '' : 'display:none;'; ?>margin-left:8px;">
+							<input type="number" min="<?php echo esc_attr( (string) Lease::CYCLE_MONTHS_MIN ); ?>" max="<?php echo esc_attr( (string) Lease::CYCLE_MONTHS_MAX ); ?>" id="rm_custom_cycle_months" name="rm_custom_cycle_months" value="<?php echo esc_attr( (string) ( $current_cycle_months > 0 ? $current_cycle_months : 1 ) ); ?>" style="width:70px;"> <?php esc_html_e( 'months', 'chrx-rental-manager' ); ?>
+						</span>
+						<p class="description"><?php esc_html_e( "Can't be changed after creation — end the lease and create a new one to switch cycles.", 'chrx-rental-manager' ); ?></p>
+						<script>
+							document.getElementById( 'rm_billing_cycle' ).addEventListener( 'change', function ( e ) {
+								document.getElementById( 'rm_custom_cycle_months_wrap' ).style.display = 'custom' === e.target.value ? '' : 'none';
+							} );
+						</script>
+					<?php endif; ?>
 				</td>
 			</tr>
 			<tr>

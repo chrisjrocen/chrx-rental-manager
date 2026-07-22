@@ -4,6 +4,8 @@
  * Variables in scope: $action ('add'|'edit'), $unit_id (int), $unit (?array),
  * $properties (array<int,array>), $preselected_property_id (int),
  * $list_url (string), $notice (?string).
+ * v2: $current_tags (array<int,string>), $all_tags (array<int,string>),
+ * $active_lease_count (int).
  *
  * @package ChrxRentalManager
  */
@@ -22,7 +24,13 @@ $statuses = array(
 	Unit::STATUS_VACANT      => __( 'Vacant', 'chrx-rental-manager' ),
 	Unit::STATUS_OCCUPIED    => __( 'Occupied', 'chrx-rental-manager' ),
 	Unit::STATUS_MAINTENANCE => __( 'Under Maintenance', 'chrx-rental-manager' ),
-	Unit::STATUS_RESERVED    => __( 'Reserved', 'chrx-rental-manager' ),
+	Unit::STATUS_BOOKED      => __( 'Booked', 'chrx-rental-manager' ),
+);
+
+$occupancy_types = array(
+	Unit::OCCUPANCY_SINGLE => __( 'Single', 'chrx-rental-manager' ),
+	Unit::OCCUPANCY_DOUBLE => __( 'Double', 'chrx-rental-manager' ),
+	Unit::OCCUPANCY_FAMILY => __( 'Family', 'chrx-rental-manager' ),
 );
 ?>
 <div class="wrap chrx-rm-admin">
@@ -64,6 +72,57 @@ $statuses = array(
 				<td><input type="text" id="rm_rent_amount" name="rm_rent_amount" value="<?php echo esc_attr( (string) ( $unit['rent_amount'] ?? '' ) ); ?>"></td>
 			</tr>
 			<tr>
+				<th><label for="rm_occupancy_type"><?php esc_html_e( 'Occupancy type', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<select id="rm_occupancy_type" name="rm_occupancy_type">
+						<?php foreach ( $occupancy_types as $key => $label ) : ?>
+							<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $unit['occupancy_type'] ?? Unit::OCCUPANCY_SINGLE, $key ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="rm_self_contained"><?php esc_html_e( 'Self-contained', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<label style="display:flex;align-items:center;gap:8px;">
+						<input type="checkbox" id="rm_self_contained" name="rm_self_contained" value="1" <?php checked( ! empty( $unit['self_contained'] ) ); ?>>
+						<?php esc_html_e( 'This unit has its own bathroom/kitchen (not shared)', 'chrx-rental-manager' ); ?>
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="rm_capacity"><?php esc_html_e( 'Capacity', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<input type="number" min="1" id="rm_capacity" name="rm_capacity" value="<?php echo esc_attr( (string) ( $unit['capacity'] ?? 1 ) ); ?>" style="width:80px;">
+					<p class="description">
+						<?php esc_html_e( 'Max concurrent active leases — 1 for a normal unit, more for hostel-style per-bed billing (each bed gets its own lease, tenant, and balance).', 'chrx-rental-manager' ); ?>
+						<?php if ( $is_edit && $active_lease_count > 0 ) : ?>
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %d: active lease count */
+									_n( 'This unit currently has %d active lease — capacity cannot be reduced below it.', 'This unit currently has %d active leases — capacity cannot be reduced below that.', $active_lease_count, 'chrx-rental-manager' ),
+									$active_lease_count
+								)
+							);
+							?>
+						<?php endif; ?>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="rm_amenity_tags"><?php esc_html_e( 'Amenities', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<input type="text" id="rm_amenity_tags" name="rm_amenity_tags" class="regular-text" list="rm_amenity_tag_options" value="<?php echo esc_attr( implode( ', ', $current_tags ) ); ?>">
+					<datalist id="rm_amenity_tag_options">
+						<?php foreach ( $all_tags as $amenity_tag ) : ?>
+							<option value="<?php echo esc_attr( $amenity_tag ); ?>">
+						<?php endforeach; ?>
+					</datalist>
+					<p class="description"><?php esc_html_e( 'Comma-separated (e.g. parking, balcony, water tank). Start typing to reuse an existing tag.', 'chrx-rental-manager' ); ?></p>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="rm_status"><?php esc_html_e( 'Status', 'chrx-rental-manager' ); ?></label></th>
 				<td>
 					<select id="rm_status" name="rm_status">
@@ -71,7 +130,7 @@ $statuses = array(
 							<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $unit['status'] ?? Unit::STATUS_VACANT, $key ); ?>><?php echo esc_html( $label ); ?></option>
 						<?php endforeach; ?>
 					</select>
-					<p class="description"><?php esc_html_e( 'Occupied/Vacant is normally set automatically from lease activity. Under Maintenance/Reserved persists until you change it here.', 'chrx-rental-manager' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Occupied/Vacant is normally set automatically from lease activity. Under Maintenance/Booked persists until you change it here.', 'chrx-rental-manager' ); ?></p>
 				</td>
 			</tr>
 			<tr>

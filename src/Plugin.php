@@ -12,9 +12,15 @@ use ChrxRentalManager\Auth\Pages;
 use ChrxRentalManager\Auth\PortalActivateForm;
 use ChrxRentalManager\Auth\Redirector;
 use ChrxRentalManager\Auth\ResetPasswordForm;
+use ChrxRentalManager\Admin\SendPaymentRequestController;
 use ChrxRentalManager\Cron\Scheduler;
 use ChrxRentalManager\Data\Migrator;
+use ChrxRentalManager\Payments\GatewayPaymentService;
+use ChrxRentalManager\Payments\GatewayRestController;
+use ChrxRentalManager\Portal\PortalMoveOutNoticeController;
+use ChrxRentalManager\Portal\PortalPayNowController;
 use ChrxRentalManager\Portal\PortalReceiptDownload;
+use ChrxRentalManager\Portal\PortalReceiptPrint;
 use ChrxRentalManager\Portal\PortalShortcode;
 use ChrxRentalManager\Roles\RoleManager;
 
@@ -66,10 +72,28 @@ final class Plugin {
 		( new PortalActivateForm() )->register();
 		( new TenantInviteController() )->register();
 		( new Menu() )->register();
+
+		// Must run on every request (not just activation): the actual
+		// wp-cron.php request that fires a 15-minute event is a separate
+		// request from the one that scheduled it, and cron_schedules is
+		// consulted fresh each time.
+		$this->scheduler->register_custom_schedules();
 		$this->scheduler->register();
 
 		( new PortalShortcode() )->register();
 		( new PortalReceiptDownload() )->register();
+		( new PortalReceiptPrint() )->register();
+		( new PortalPayNowController() )->register();
+		( new PortalMoveOutNoticeController() )->register();
+		( new SendPaymentRequestController() )->register();
+		( new GatewayRestController() )->register();
+
+		// v2 (SPEC.md §4.9): the webhook's deferred-processing hook — see
+		// GatewayRestController::handle_webhook()'s wp_schedule_single_event()
+		// call. Registered here (not inside GatewayRestController) since
+		// it must fire on the wp-cron.php request too, not only on the
+		// webhook request that scheduled it.
+		add_action( 'rm_process_gateway_webhook', array( new GatewayPaymentService(), 'process_webhook_event' ), 10, 3 );
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_end_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );

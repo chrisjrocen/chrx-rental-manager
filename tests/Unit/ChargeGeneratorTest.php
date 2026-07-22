@@ -14,11 +14,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class ChargeGeneratorTest extends TestCase {
 
-	private function lease( string $start, string $end, int $billing_day ): array {
+	private function lease( string $start, string $end, int $billing_day, int $cycle_months = 1 ): array {
 		return [
-			'start_date'  => $start,
-			'end_date'    => $end,
-			'billing_day' => $billing_day,
+			'start_date'   => $start,
+			'end_date'     => $end,
+			'billing_day'  => $billing_day,
+			'cycle_months' => $cycle_months,
 		];
 	}
 
@@ -93,6 +94,72 @@ final class ChargeGeneratorTest extends TestCase {
 		$lease = $this->lease( '2026-08-01', '2027-07-31', 1 );
 
 		$period = ChargeGenerator::compute_next_period( $lease, [ '2026-08-01' ], '2026-09-10', 5 );
+
+		$this->assertNotNull( $period );
+		$this->assertSame( '2026-09-01', $period['period_start'] );
+	}
+
+	// v2 (SPEC.md §4.2): "period due dates advance by cycle_months" —
+	// one generalized billing engine for every cycle, not per-cycle code.
+
+	public function test_quarterly_lease_advances_the_second_period_by_three_months(): void {
+		$lease = $this->lease( '2026-01-01', '2027-12-31', 1, 3 );
+
+		$period = ChargeGenerator::compute_next_period( $lease, [ '2026-01-01' ], '2026-04-01', 5 );
+
+		$this->assertNotNull( $period );
+		$this->assertSame( '2026-04-01', $period['period_start'] );
+	}
+
+	public function test_semester_lease_advances_the_second_period_by_four_months(): void {
+		$lease = $this->lease( '2026-01-15', '2027-12-31', 15, 4 );
+
+		$period = ChargeGenerator::compute_next_period( $lease, [ '2026-01-01' ], '2026-05-10', 5 );
+
+		$this->assertNotNull( $period );
+		$this->assertSame( '2026-05-01', $period['period_start'] );
+	}
+
+	public function test_annual_lease_advances_the_second_period_by_twelve_months(): void {
+		$lease = $this->lease( '2026-06-01', '2029-05-31', 1, 12 );
+
+		$period = ChargeGenerator::compute_next_period( $lease, [ '2026-06-01' ], '2027-05-27', 5 );
+
+		$this->assertNotNull( $period );
+		$this->assertSame( '2027-06-01', $period['period_start'] );
+	}
+
+	public function test_custom_cycle_does_not_generate_before_its_multi_month_lead_window(): void {
+		// Quarterly, billing_day 1: second period due 1 Apr 2026, lead
+		// window opens 27 Mar 2026 — one day earlier must not generate.
+		$lease = $this->lease( '2026-01-01', '2027-12-31', 1, 3 );
+
+		$period = ChargeGenerator::compute_next_period( $lease, [ '2026-01-01' ], '2026-03-26', 5 );
+
+		$this->assertNull( $period );
+	}
+
+	public function test_quarterly_billing_day_31_clamps_to_the_target_months_last_day(): void {
+		// Anchored on Jan 31; +3 months lands in April, which only has 30 days.
+		$lease = $this->lease( '2026-01-31', '2027-12-31', 31, 3 );
+
+		$period = ChargeGenerator::compute_next_period( $lease, [ '2026-01-01' ], '2026-04-25', 5 );
+
+		$this->assertNotNull( $period );
+		$this->assertSame( '2026-04-30', $period['period_due_date'] );
+	}
+
+	public function test_a_lease_with_no_cycle_months_key_defaults_to_monthly_for_backward_compatibility(): void {
+		// Defensive fallback only — every real write path sets cycle_months,
+		// but a bare array (as v1 code might still construct) must still
+		// behave exactly like a monthly lease.
+		$lease = [
+			'start_date'  => '2026-08-01',
+			'end_date'    => '2027-07-31',
+			'billing_day' => 1,
+		];
+
+		$period = ChargeGenerator::compute_next_period( $lease, [ '2026-08-01' ], '2026-08-27', 5 );
 
 		$this->assertNotNull( $period );
 		$this->assertSame( '2026-09-01', $period['period_start'] );

@@ -75,6 +75,13 @@ $current_landlord_id = array() !== $landlord_ids ? $landlord_ids[0] : 0;
 				</td>
 			</tr>
 			<tr>
+				<th><label for="rm_notice_period_months"><?php esc_html_e( 'Move-out notice period override', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<input type="number" min="1" id="rm_notice_period_months" name="rm_notice_period_months" value="<?php echo esc_attr( (string) ( $property['notice_period_months'] ?? '' ) ); ?>" style="width:80px;">
+					<p class="description"><?php esc_html_e( 'Months. Leave blank to use the account-wide default from Settings.', 'chrx-rental-manager' ); ?></p>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="rm_notes"><?php esc_html_e( 'Notes', 'chrx-rental-manager' ); ?></label></th>
 				<td><textarea id="rm_notes" name="rm_notes" rows="3" class="large-text"><?php echo esc_textarea( $property['notes'] ?? '' ); ?></textarea></td>
 			</tr>

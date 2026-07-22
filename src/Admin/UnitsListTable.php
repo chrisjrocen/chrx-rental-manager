@@ -52,12 +52,13 @@ final class UnitsListTable extends \WP_List_Table {
 
 	public function get_columns(): array {
 		return array(
-			'unit'     => __( 'Unit', 'chrx-rental-manager' ),
-			'property' => __( 'Property', 'chrx-rental-manager' ),
-			'type'     => __( 'Type', 'chrx-rental-manager' ),
-			'tenant'   => __( 'Tenant', 'chrx-rental-manager' ),
-			'rent'     => __( 'Rent', 'chrx-rental-manager' ),
-			'status'   => __( 'Status', 'chrx-rental-manager' ),
+			'unit'      => __( 'Unit', 'chrx-rental-manager' ),
+			'property'  => __( 'Property', 'chrx-rental-manager' ),
+			'type'      => __( 'Type', 'chrx-rental-manager' ),
+			'occupancy' => __( 'Occupancy', 'chrx-rental-manager' ),
+			'tenant'    => __( 'Tenant', 'chrx-rental-manager' ),
+			'rent'      => __( 'Rent', 'chrx-rental-manager' ),
+			'status'    => __( 'Status', 'chrx-rental-manager' ),
 		);
 	}
 
@@ -70,11 +71,18 @@ final class UnitsListTable extends \WP_List_Table {
 		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only search/filter/pagination params, no state change.
 		$property_id = isset( $_GET['property_id'] ) ? absint( $_GET['property_id'] ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only search/filter/pagination params, no state change.
+		$occupancy_type = isset( $_GET['occupancy_type'] ) ? sanitize_key( wp_unslash( $_GET['occupancy_type'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only search/filter/pagination params, no state change.
+		$self_contained_raw = isset( $_GET['self_contained'] ) ? sanitize_key( wp_unslash( $_GET['self_contained'] ) ) : '';
+		$self_contained     = '' === $self_contained_raw ? null : ( '1' === $self_contained_raw );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only search/filter/pagination params, no state change.
+		$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 
 		$per_page     = 20;
 		$current_page = $this->get_pagenum();
 
-		$all_rows = $this->units->search( $search, $status, $property_id, PHP_INT_MAX, 0 );
+		$all_rows = $this->units->search( $search, $status, $property_id, PHP_INT_MAX, 0, $occupancy_type, $self_contained, $tag );
 
 		if ( null !== $this->restrict_to_property_ids ) {
 			$all_rows = array_values(
@@ -132,6 +140,32 @@ final class UnitsListTable extends \WP_List_Table {
 		}
 
 		return esc_html( sprintf( '%d-bed', $bedrooms ) );
+	}
+
+	/**
+	 * SPEC.md §4.1: "for capacity > 1 units, show occupied n/capacity, e.g.
+	 * '3/4 beds'" — capacity-1 units (the v1-equivalent default) show
+	 * nothing extra here since column_tenant() already names the occupant.
+	 *
+	 * @param array<string,mixed> $item
+	 */
+	public function column_occupancy( $item ): string {
+		$capacity = (int) $item['capacity'];
+
+		if ( $capacity <= 1 ) {
+			return '';
+		}
+
+		$filled = $this->leases->count_active_for_unit( (int) $item['id'] );
+
+		return esc_html(
+			sprintf(
+				/* translators: 1: filled beds, 2: total beds */
+				__( '%1$d/%2$d beds', 'chrx-rental-manager' ),
+				$filled,
+				$capacity
+			)
+		);
 	}
 
 	/**

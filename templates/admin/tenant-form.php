@@ -50,8 +50,26 @@ $is_edit = 'edit' === $action;
 				<td><input type="email" id="rm_email" name="rm_email" class="regular-text" value="<?php echo esc_attr( $tenant['email'] ?? '' ); ?>"></td>
 			</tr>
 			<tr>
+				<th><label for="rm_whatsapp_number"><?php esc_html_e( 'WhatsApp number', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<input type="text" id="rm_whatsapp_number" name="rm_whatsapp_number" class="regular-text" value="<?php echo esc_attr( $tenant['whatsapp_number'] ?? '' ); ?>">
+					<p class="description"><?php esc_html_e( 'Optional. Local or international format — normalized automatically. Notifications also go here in addition to email.', 'chrx-rental-manager' ); ?></p>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="rm_national_id"><?php esc_html_e( 'National ID', 'chrx-rental-manager' ); ?></label></th>
 				<td><input type="text" id="rm_national_id" name="rm_national_id" class="regular-text" value="<?php echo esc_attr( $tenant['national_id'] ?? '' ); ?>"></td>
+			</tr>
+			<tr>
+				<th><?php esc_html_e( 'Next of kin', 'chrx-rental-manager' ); ?></th>
+				<td>
+					<div style="display:flex;flex-direction:column;gap:8px;max-width:360px;">
+						<input type="text" name="rm_next_of_kin_name" placeholder="<?php esc_attr_e( 'Name', 'chrx-rental-manager' ); ?>" value="<?php echo esc_attr( $tenant['next_of_kin_name'] ?? '' ); ?>">
+						<input type="text" name="rm_next_of_kin_phone" placeholder="<?php esc_attr_e( 'Phone', 'chrx-rental-manager' ); ?>" value="<?php echo esc_attr( $tenant['next_of_kin_phone'] ?? '' ); ?>">
+						<input type="text" name="rm_next_of_kin_relationship" placeholder="<?php esc_attr_e( 'Relationship', 'chrx-rental-manager' ); ?>" value="<?php echo esc_attr( $tenant['next_of_kin_relationship'] ?? '' ); ?>">
+					</div>
+					<p class="description"><?php esc_html_e( 'Optional. Display-only — the next of kin gets no portal access and no notifications.', 'chrx-rental-manager' ); ?></p>
+				</td>
 			</tr>
 			<?php if ( ! $is_edit ) : ?>
 				<tr>

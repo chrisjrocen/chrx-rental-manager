@@ -65,9 +65,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 									wp_nonce_url(
 										add_query_arg(
 											array(
-												'page'      => 'chrx-rm-units',
+												'page' => 'chrx-rm-units',
 												'rm_action' => 'delete_permanently',
-												'id'        => $unit['id'],
+												'id'   => $unit['id'],
 											),
 											admin_url( 'admin.php' )
 										),

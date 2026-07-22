@@ -117,7 +117,10 @@ function on_activate(): void {
 
 	( new Roles\RoleManager() )->register_roles();
 	( new Auth\Pages() )->ensure_pages_exist();
-	( new Cron\Scheduler() )->schedule_events();
+
+	$scheduler = new Cron\Scheduler();
+	$scheduler->register_custom_schedules();
+	$scheduler->schedule_events();
 
 	flush_rewrite_rules();
 }

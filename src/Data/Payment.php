@@ -21,7 +21,11 @@ final class Payment extends AbstractRepository {
 	public const METHOD_BANK_TRANSFER = 'bank_transfer';
 	public const METHOD_MTN_MOMO      = 'mtn_momo';
 	public const METHOD_AIRTEL_MONEY  = 'airtel_money';
-	public const METHOD_OTHER         = 'other';
+	// v2 (SPEC.md §4.3): set automatically by the Nylon Pay webhook/
+	// reconciliation flow — never a selectable option in the manual
+	// Record Payment form.
+	public const METHOD_NYLONPAY = 'nylonpay';
+	public const METHOD_OTHER    = 'other';
 
 	public const STATUS_RECORDED = 'recorded';
 	public const STATUS_VOIDED   = 'voided';

@@ -8,9 +8,12 @@ use ChrxRentalManager\Admin\Support\Settings;
 use ChrxRentalManager\Cron\LateFeeApplier;
 use ChrxRentalManager\Data\Charge;
 use ChrxRentalManager\Data\Lease;
+use ChrxRentalManager\Data\NotificationLog;
 use ChrxRentalManager\Data\Property;
+use ChrxRentalManager\Data\PropertyStaff;
 use ChrxRentalManager\Data\Tenant;
 use ChrxRentalManager\Data\Unit;
+use ChrxRentalManager\Roles\RoleManager;
 
 /**
  * `rm_apply_late_fees` (SPEC.md §4.3/§6) — the grace-period boundary is
@@ -23,6 +26,8 @@ final class LateFeeApplierTest extends IntegrationTestCase {
 	private Lease $leases;
 	private LateFeeApplier $applier;
 	private int $lease_id;
+	private int $property_id;
+	private int $staff_user_id;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -35,8 +40,18 @@ final class LateFeeApplierTest extends IntegrationTestCase {
 		update_option( Settings::OPT_LATE_FEE_AMOUNT, 50 );
 		update_option( Settings::OPT_LATE_FEE_TYPE, Settings::LATE_FEE_TYPE_FLAT );
 
-		$properties  = new Property();
-		$property_id = $properties->insert( [ 'name' => 'Late Fee Test Property', 'city' => 'Accra' ] );
+		$properties        = new Property();
+		$property_id       = $properties->insert( [ 'name' => 'Late Fee Test Property', 'city' => 'Accra' ] );
+		$this->property_id = $property_id;
+
+		$this->staff_user_id = wp_insert_user( [
+			'user_login' => 'late_fee_staff_' . wp_generate_password( 6, false ),
+			'user_email' => uniqid( 'late_fee_staff_', true ) . '@example.com',
+			'user_pass'  => wp_generate_password(),
+			'role'       => RoleManager::ROLE_STAFF,
+		] );
+
+		( new PropertyStaff() )->assign( $property_id, $this->staff_user_id );
 
 		$units   = new Unit();
 		$unit_id = $units->insert( [
@@ -146,5 +161,33 @@ final class LateFeeApplierTest extends IntegrationTestCase {
 		$late_fee = array_values( array_filter( $charges, fn( array $c ): bool => Charge::TYPE_LATE_FEE === $c['type'] ) );
 
 		$this->assertSame( 100.0, (float) $late_fee[0]['amount_due'] );
+	}
+
+	/**
+	 * SPEC.md §5 (v2): "Charge overdue past grace → Assigned staff →
+	 * Email + WhatsApp" — this notification did not exist in v1 at all;
+	 * asserts it now fires and logs against the assigned staff member.
+	 */
+	public function test_assigned_staff_is_notified_when_a_late_fee_is_applied(): void {
+		$due_date = gmdate( 'Y-m-d', strtotime( current_time( 'Y-m-d' ) . ' -6 days' ) );
+		$this->insert_charge_due( $due_date );
+
+		$this->applier->apply();
+
+		global $wpdb;
+
+		$staff_user = get_userdata( $this->staff_user_id );
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}rm_notifications_log WHERE type = %s AND recipient = %s AND channel = %s",
+				'charge_overdue',
+				$staff_user->user_email,
+				NotificationLog::CHANNEL_EMAIL
+			),
+			ARRAY_A
+		);
+
+		$this->assertNotNull( $row, 'Assigned staff should be notified of the overdue charge.' );
 	}
 }

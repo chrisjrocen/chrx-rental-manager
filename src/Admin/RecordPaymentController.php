@@ -6,12 +6,16 @@ namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Admin\Support\FlashNotice;
 use ChrxRentalManager\Admin\Support\Ledger;
+use ChrxRentalManager\Admin\Support\Settings;
 use ChrxRentalManager\Billing\PaymentAllocator;
 use ChrxRentalManager\Billing\ReceiptMailer;
 use ChrxRentalManager\Billing\ReceiptPdf;
+use ChrxRentalManager\Communications\Notifier;
 use ChrxRentalManager\Data\Charge;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\Payment;
+use ChrxRentalManager\Data\Property;
+use ChrxRentalManager\Data\PropertyStaff;
 use ChrxRentalManager\Data\Tenant;
 use ChrxRentalManager\Data\Unit;
 use ChrxRentalManager\Roles\Access;
@@ -49,6 +53,9 @@ final class RecordPaymentController {
 	private PaymentAllocator $allocator;
 	private ReceiptPdf $receipt_pdf;
 	private ReceiptMailer $receipt_mailer;
+	private Property $properties;
+	private PropertyStaff $property_staff;
+	private Notifier $notifier;
 
 	public function __construct(
 		?Lease $leases = null,
@@ -60,7 +67,10 @@ final class RecordPaymentController {
 		?Access $access = null,
 		?PaymentAllocator $allocator = null,
 		?ReceiptPdf $receipt_pdf = null,
-		?ReceiptMailer $receipt_mailer = null
+		?ReceiptMailer $receipt_mailer = null,
+		?Property $properties = null,
+		?PropertyStaff $property_staff = null,
+		?Notifier $notifier = null
 	) {
 		$this->units          = $units ?? new Unit();
 		$this->leases         = $leases ?? new Lease( $this->units );
@@ -72,6 +82,9 @@ final class RecordPaymentController {
 		$this->allocator      = $allocator ?? new PaymentAllocator( $this->payments, $this->charges, $this->ledger );
 		$this->receipt_pdf    = $receipt_pdf ?? new ReceiptPdf( $this->payments, $this->charges, $this->leases, $this->units, $this->tenants, null, null, $this->ledger );
 		$this->receipt_mailer = $receipt_mailer ?? new ReceiptMailer( $this->payments, $this->leases, $this->tenants, $this->receipt_pdf );
+		$this->properties     = $properties ?? new Property();
+		$this->property_staff = $property_staff ?? new PropertyStaff();
+		$this->notifier       = $notifier ?? new Notifier();
 	}
 
 	public function register(): void {
@@ -111,6 +124,7 @@ final class RecordPaymentController {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param, no state change; preselects a charge, still re-validated in handle_submit().
 		$preselected_charge_id = isset( $_GET['charge_id'] ) ? absint( $_GET['charge_id'] ) : 0;
 		$is_closing_out        = Lease::STATUS_ACTIVE !== $lease['status'];
+		$nylonpay_available    = Settings::nylonpay_is_available();
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/record-payment-form.php';
 	}
@@ -183,6 +197,8 @@ final class RecordPaymentController {
 			gmdate( 'Y-m-d H:i:s', (int) strtotime( $paid_date ) )
 		);
 
+		$this->notify_staff_of_payment( $lease, $unit, $amount, (int) $allocation['primary_payment_id'] );
+
 		$receipt = $this->receipt_pdf->generate_for_payment( $allocation['primary_payment_id'], $allocation['credit_applied'] );
 
 		if ( null !== $receipt ) {
@@ -204,5 +220,57 @@ final class RecordPaymentController {
 
 	public static function nonce_action(): string {
 		return self::NONCE_ACTION;
+	}
+
+	/**
+	 * SPEC.md §5: "Payment recorded (manual or Nylon Pay) → Assigned
+	 * staff → Email + WhatsApp." Did not exist at all in v1 — new dispatch
+	 * logic, not a refactor (see the phase plan). Fires for every payment,
+	 * manual or (in a later phase) gateway-recorded, since both flow
+	 * through PaymentAllocator::record_payment() the same way.
+	 *
+	 * @param array<string,mixed> $lease
+	 * @param array<string,mixed> $unit
+	 */
+	private function notify_staff_of_payment( array $lease, array $unit, float $amount, int $payment_id ): void {
+		$tenant      = $this->tenants->find( (int) $lease['tenant_id'] );
+		$tenant_name = null === $tenant ? '' : (string) $tenant['full_name'];
+		$property    = $this->properties->find( (int) $unit['property_id'] );
+
+		$subject = sprintf(
+			/* translators: 1: tenant name, 2: unit label */
+			__( 'Payment recorded — %1$s, %2$s', 'chrx-rental-manager' ),
+			$tenant_name,
+			$unit['unit_label']
+		);
+
+		$message = sprintf(
+			/* translators: 1: tenant name, 2: unit label, 3: amount */
+			__( 'A payment of %3$s was recorded for %1$s, %2$s.', 'chrx-rental-manager' ),
+			$tenant_name,
+			$unit['unit_label'],
+			(string) $amount
+		);
+
+		foreach ( $this->property_staff->user_ids_for_property( (int) $unit['property_id'] ) as $user_id ) {
+			$user = get_userdata( $user_id );
+
+			if ( false === $user || '' === $user->user_email ) {
+				continue;
+			}
+
+			$this->notifier->notify(
+				'payment_recorded',
+				$payment_id,
+				array(
+					'email'           => $user->user_email,
+					'whatsapp_number' => get_user_meta( $user_id, StaffRolesController::WHATSAPP_META_KEY, true ),
+				),
+				$subject,
+				$message,
+				Settings::TEMPLATE_KEY_PAYMENT_RECEIVED,
+				array( $tenant_name, $unit['unit_label'], null === $property ? '' : (string) $property['name'], (string) $amount )
+			);
+		}
 	}
 }

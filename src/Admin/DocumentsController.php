@@ -5,6 +5,7 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Data\Document;
+use ChrxRentalManager\Data\Expense;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\Tenant;
 use ChrxRentalManager\Data\Unit;
@@ -30,6 +31,7 @@ final class DocumentsController {
 	private Unit $units;
 	private Lease $leases;
 	private Tenant $tenants;
+	private Expense $expenses;
 	private Access $access;
 
 	public function __construct(
@@ -37,12 +39,14 @@ final class DocumentsController {
 		?Unit $units = null,
 		?Lease $leases = null,
 		?Tenant $tenants = null,
+		?Expense $expenses = null,
 		?Access $access = null
 	) {
 		$this->documents = $documents ?? new Document();
 		$this->units     = $units ?? new Unit();
 		$this->leases    = $leases ?? new Lease( $this->units );
 		$this->tenants   = $tenants ?? new Tenant();
+		$this->expenses  = $expenses ?? new Expense();
 		$this->access    = $access ?? new Access();
 	}
 
@@ -54,7 +58,7 @@ final class DocumentsController {
 	public function handle_upload(): void {
 		check_admin_referer( self::UPLOAD_NONCE_ACTION );
 
-		if ( ! current_user_can( RoleManager::CAP_MANAGE_UNITS ) && ! current_user_can( RoleManager::CAP_MANAGE_TENANTS ) && ! current_user_can( RoleManager::CAP_MANAGE_LEASES ) ) {
+		if ( ! current_user_can( RoleManager::CAP_MANAGE_UNITS ) && ! current_user_can( RoleManager::CAP_MANAGE_TENANTS ) && ! current_user_can( RoleManager::CAP_MANAGE_LEASES ) && ! current_user_can( RoleManager::CAP_MANAGE_EXPENSES ) ) {
 			wp_die( esc_html__( 'You do not have permission to upload documents.', 'chrx-rental-manager' ), 403 );
 		}
 
@@ -133,9 +137,10 @@ final class DocumentsController {
 		$property_id = $this->property_id_for_entity( $entity_type, $entity_id );
 
 		if ( null === $property_id ) {
-			// Tenant/lease with no unit tied to a property yet — any staff
-			// with the relevant manage capability may attach documents.
-			return current_user_can( RoleManager::CAP_MANAGE_UNITS ) || current_user_can( RoleManager::CAP_MANAGE_TENANTS ) || current_user_can( RoleManager::CAP_MANAGE_LEASES );
+			// Tenant/lease/account-scoped-expense with no unit tied to a
+			// property yet — any staff with the relevant manage capability
+			// may attach documents.
+			return current_user_can( RoleManager::CAP_MANAGE_UNITS ) || current_user_can( RoleManager::CAP_MANAGE_TENANTS ) || current_user_can( RoleManager::CAP_MANAGE_LEASES ) || current_user_can( RoleManager::CAP_MANAGE_EXPENSES );
 		}
 
 		return $this->access->userCanAccessProperty( $user_id, $property_id );
@@ -146,6 +151,12 @@ final class DocumentsController {
 			$unit = $this->units->find( $entity_id );
 
 			return null === $unit ? null : (int) $unit['property_id'];
+		}
+
+		if ( Document::ENTITY_EXPENSE === $entity_type ) {
+			$expense = $this->expenses->find( $entity_id );
+
+			return null === $expense || null === $expense['property_id'] ? null : (int) $expense['property_id'];
 		}
 
 		if ( Document::ENTITY_LEASE === $entity_type ) {

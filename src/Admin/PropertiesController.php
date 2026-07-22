@@ -233,6 +233,12 @@ final class PropertiesController {
 		$landlord_id = isset( $_POST['rm_landlord_id'] ) ? absint( $_POST['rm_landlord_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$staff_ids = isset( $_POST['rm_staff_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['rm_staff_ids'] ) ) : array();
+		// v2 (SPEC.md §4.10): blank means "use the account-wide default" —
+		// stored as NULL, not 0, so Settings::notice_period_months_for_property()'s
+		// null-check can tell "no override" apart from a (nonsensical) zero.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$notice_period_months_raw = isset( $_POST['rm_notice_period_months'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_notice_period_months'] ) ) : '';
+		$notice_period_months     = '' === $notice_period_months_raw ? null : max( 1, absint( $notice_period_months_raw ) );
 
 		$back_to_form = add_query_arg(
 			array(
@@ -254,10 +260,11 @@ final class PropertiesController {
 		}
 
 		$data = array(
-			'name'    => $name,
-			'address' => $address,
-			'city'    => $city,
-			'notes'   => $notes,
+			'name'                 => $name,
+			'address'              => $address,
+			'city'                 => $city,
+			'notes'                => $notes,
+			'notice_period_months' => $notice_period_months,
 		);
 
 		if ( 0 === $property_id ) {

@@ -5,7 +5,8 @@
  *
  * Variables in scope: $receipt (array), $payment (array), $lease (?array),
  * $unit (?array), $tenant (?array), $property (?array), $download_url
- * (string), $email_url (string), $list_url (string), $notice (?string).
+ * (string), $email_url (string), $print_url (string), $list_url (string),
+ * $notice (?string).
  *
  * @package ChrxRentalManager
  */
@@ -66,7 +67,7 @@ $tenant_email = null === $tenant ? '' : (string) $tenant['email'];
 			</div>
 			<div style="display:flex;gap:10px;">
 				<a href="<?php echo esc_url( $download_url ); ?>" target="_blank" rel="noopener" style="flex:1;text-align:center;background:#f6f7f7;color:#2271b1;border:1px solid #2271b1;border-radius:4px;padding:9px;font-size:13px;font-weight:600;text-decoration:none;"><?php esc_html_e( 'Download PDF', 'chrx-rental-manager' ); ?></a>
-				<a href="<?php echo esc_url( $download_url ); ?>" target="_blank" rel="noopener" style="flex:1;text-align:center;background:#f6f7f7;color:#50575e;border:1px solid #c3c4c7;border-radius:4px;padding:9px;font-size:13px;text-decoration:none;"><?php esc_html_e( 'Print', 'chrx-rental-manager' ); ?></a>
+				<a href="<?php echo esc_url( $print_url ); ?>" target="_blank" rel="noopener" style="flex:1;text-align:center;background:#f6f7f7;color:#50575e;border:1px solid #c3c4c7;border-radius:4px;padding:9px;font-size:13px;text-decoration:none;"><?php esc_html_e( 'Print', 'chrx-rental-manager' ); ?></a>
 			</div>
 			<?php if ( null !== $receipt['emailed_at'] ) : ?>
 				<div style="background:#e5f5eb;border:1px solid #b6e0c2;border-radius:6px;padding:12px 14px;font-size:12px;color:#0a7d34;">

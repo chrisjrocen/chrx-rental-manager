@@ -4,8 +4,10 @@ declare( strict_types = 1 );
 
 namespace ChrxRentalManager\Billing;
 
+use ChrxRentalManager\Admin\Support\ExpenseCategory;
 use ChrxRentalManager\Admin\Support\Money;
 use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Data\Expense;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\Payment;
 use ChrxRentalManager\Data\Property;
@@ -41,19 +43,22 @@ final class StatementPdf {
 	private Lease $leases;
 	private Tenant $tenants;
 	private Payment $payments;
+	private Expense $expenses;
 
 	public function __construct(
 		?Property $properties = null,
 		?Unit $units = null,
 		?Lease $leases = null,
 		?Tenant $tenants = null,
-		?Payment $payments = null
+		?Payment $payments = null,
+		?Expense $expenses = null
 	) {
 		$this->properties = $properties ?? new Property();
 		$this->units      = $units ?? new Unit();
 		$this->leases     = $leases ?? new Lease();
 		$this->tenants    = $tenants ?? new Tenant();
 		$this->payments   = $payments ?? new Payment();
+		$this->expenses   = $expenses ?? new Expense();
 	}
 
 	/**
@@ -71,10 +76,19 @@ final class StatementPdf {
 		}
 
 		$line_items = $this->collect_line_items( $property_id, $from, $to );
-		$totals     = self::totals_for( $line_items );
+		$totals     = $this->totals_for( $property_id, $line_items, $from, $to );
 		$gross      = $totals['gross'];
 		$fee_amount = $totals['fee_amount'];
+		$expenses   = $totals['expenses'];
 		$net        = $totals['net'];
+
+		$expense_lines = array_map(
+			static fn( array $row ): array => array(
+				'label'  => ExpenseCategory::label_for( $row['category'], $row['custom_category_label'] ),
+				'amount' => Money::format( (float) $row['amount'] ),
+			),
+			$totals['expense_rows']
+		);
 
 		$html = $this->statement_html(
 			array(
@@ -87,6 +101,8 @@ final class StatementPdf {
 				'gross'         => Money::format( $gross ),
 				'fee_label'     => sprintf( /* translators: %s: fee percentage */ __( 'Management fee (%s%%)', 'chrx-rental-manager' ), rtrim( rtrim( number_format( Settings::management_fee_percent(), 1 ), '0' ), '.' ) ),
 				'fee_amount'    => Money::format( $fee_amount ),
+				'expense_lines' => $expense_lines,
+				'expenses'      => Money::format( $expenses ),
 				'net'           => Money::format( $net ),
 			)
 		);
@@ -108,29 +124,44 @@ final class StatementPdf {
 	 * statements" list (designs/28), which shows Gross/Net columns per
 	 * row without needing a full PDF render just to display two numbers.
 	 *
-	 * @return array{gross:float,fee_amount:float,net:float}|null null if the property doesn't exist.
+	 * @return array{gross:float,fee_amount:float,expenses:float,net:float}|null null if the property doesn't exist.
 	 */
 	public function summary( int $property_id, string $from, string $to ): ?array {
 		if ( null === $this->properties->find( $property_id ) ) {
 			return null;
 		}
 
-		return self::totals_for( $this->collect_line_items( $property_id, $from, $to ) );
+		$totals = $this->totals_for( $property_id, $this->collect_line_items( $property_id, $from, $to ), $from, $to );
+		unset( $totals['expense_rows'] );
+
+		return $totals;
 	}
 
 	/**
+	 * v2 (SPEC.md §4.4): landlord statements upgrade from income-only to a
+	 * full P&L — gross, management fee, this property's own expenses, net.
+	 * Expenses come from Expense::for_report( $from, $to, $property_id ),
+	 * which filters on `property_id = %d` — a SQL condition that can never
+	 * match an account-scoped row's NULL property_id, so account-level
+	 * expenses are excluded automatically, never silently allocated to a
+	 * single owner's statement (SPEC.md §4.4's explicit instruction).
+	 *
 	 * @param array<int,array{unit_label:string,tenant_name:?string,collected:float}> $line_items
 	 *
-	 * @return array{gross:float,fee_amount:float,net:float}
+	 * @return array{gross:float,fee_amount:float,expenses:float,net:float,expense_rows:array<int,array<string,mixed>>}
 	 */
-	private static function totals_for( array $line_items ): array {
-		$gross      = array_sum( array_column( $line_items, 'collected' ) );
-		$fee_amount = round( $gross * ( Settings::management_fee_percent() / 100 ), 2 );
+	private function totals_for( int $property_id, array $line_items, string $from, string $to ): array {
+		$gross        = array_sum( array_column( $line_items, 'collected' ) );
+		$fee_amount   = round( $gross * ( Settings::management_fee_percent() / 100 ), 2 );
+		$expense_rows = $this->expenses->for_report( $from, $to, $property_id );
+		$expenses     = (float) array_sum( array_column( $expense_rows, 'amount' ) );
 
 		return array(
-			'gross'      => $gross,
-			'fee_amount' => $fee_amount,
-			'net'        => $gross - $fee_amount,
+			'gross'        => $gross,
+			'fee_amount'   => $fee_amount,
+			'expenses'     => $expenses,
+			'net'          => $gross - $fee_amount - $expenses,
+			'expense_rows' => $expense_rows,
 		);
 	}
 

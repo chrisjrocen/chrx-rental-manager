@@ -171,4 +171,36 @@ final class PaymentAllocatorTest extends IntegrationTestCase {
 		$charge = $this->charges->find( $charge_id );
 		$this->assertSame( Charge::STATUS_UNPAID, $charge['status'], 'A voided credit must not be swept onto a new charge.' );
 	}
+
+	/**
+	 * v2 (SPEC.md §3.1/§4.9): "recorded_by (wp_user_id, nullable — null
+	 * for webhook-recorded payments)" and the new gateway_transaction_id
+	 * link — a regression check that record_payment() actually persists
+	 * both rather than silently coercing null to 0 (a real wp_user_id).
+	 */
+	public function test_record_payment_accepts_a_null_recorded_by_and_a_gateway_transaction_id(): void {
+		$charge_id = $this->insert_charge( 1000.0 );
+
+		$allocation = $this->allocator->record_payment( $this->lease_id, $charge_id, 1000.0, Payment::METHOD_NYLONPAY, 'Nylon Pay #test', null, '2026-03-01 00:00:00', 42 );
+
+		$payment = $this->payments->find( $allocation['primary_payment_id'] );
+		$this->assertNull( $payment['recorded_by'] );
+		$this->assertSame( 42, (int) $payment['gateway_transaction_id'] );
+	}
+
+	/**
+	 * A credit row swept from a lease with a null recorded_by (e.g. an
+	 * earlier gateway overpayment) must not blow up apply_credits_to_charge()'s
+	 * (int) cast — it was `(int) null` = 0 before this was fixed, which
+	 * would have misrepresented "no one" as wp_user_id 0.
+	 */
+	public function test_apply_credits_to_charge_handles_a_credit_with_a_null_recorded_by(): void {
+		$this->allocator->record_payment( $this->lease_id, null, 500.0, Payment::METHOD_NYLONPAY, '', null, '2026-02-01 00:00:00' );
+
+		$charge_id = $this->insert_charge( 500.0 );
+		$this->allocator->apply_credits_to_charge( $this->lease_id, $charge_id );
+
+		$charge = $this->charges->find( $charge_id );
+		$this->assertSame( Charge::STATUS_PAID, $charge['status'] );
+	}
 }

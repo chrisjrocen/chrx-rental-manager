@@ -5,6 +5,7 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Admin\Support\Reports;
+use ChrxRentalManager\Cron\AlertDispatcher;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Roles\Access;
 use ChrxRentalManager\Roles\RoleManager;
@@ -33,11 +34,13 @@ final class DashboardController {
 	private Reports $reports;
 	private Property $properties;
 	private Access $access;
+	private AlertDispatcher $alert_dispatcher;
 
-	public function __construct( ?Reports $reports = null, ?Property $properties = null, ?Access $access = null ) {
-		$this->reports    = $reports ?? new Reports();
-		$this->properties = $properties ?? new Property();
-		$this->access     = $access ?? new Access();
+	public function __construct( ?Reports $reports = null, ?Property $properties = null, ?Access $access = null, ?AlertDispatcher $alert_dispatcher = null ) {
+		$this->reports          = $reports ?? new Reports();
+		$this->properties       = $properties ?? new Property();
+		$this->access           = $access ?? new Access();
+		$this->alert_dispatcher = $alert_dispatcher ?? new AlertDispatcher();
 	}
 
 	public function render(): void {
@@ -77,11 +80,23 @@ final class DashboardController {
 
 		$effective_property_ids = $selected_property_id > 0 ? array( $selected_property_id ) : $restrict_to_property_ids;
 
-		$occupancy   = $this->reports->occupancy( $effective_property_ids );
-		$outstanding = $this->reports->outstanding_summary( $effective_property_ids );
-		$collected   = $this->reports->collected_this_month( $effective_property_ids );
-		$expiring    = $this->reports->expiring_within( $effective_property_ids, 30 );
-		$recent      = $this->reports->recent_payments( $effective_property_ids, 5 );
+		$occupancy        = $this->reports->occupancy( $effective_property_ids );
+		$occupancy_beds   = $this->reports->occupancy_beds( $effective_property_ids );
+		$outstanding      = $this->reports->outstanding_summary( $effective_property_ids );
+		$collected        = $this->reports->collected_this_month( $effective_property_ids );
+		$monthly_expenses = $this->reports->monthly_expense_total( $effective_property_ids );
+		$net_income       = $this->reports->net_income( $effective_property_ids );
+		$expiring         = $this->reports->expiring_within( $effective_property_ids, 30 );
+		$recent           = $this->reports->recent_payments( $effective_property_ids, 5 );
+
+		// v2 (SPEC.md §4.10/§5): "dashboard flag" for active move-out notices.
+		$active_move_out_notices = $this->reports->active_move_out_notices( $effective_property_ids );
+
+		// v2 (SPEC.md §4.8): banner alerts, scoped to every property this
+		// viewer can see (not just the currently-selected filter) and to
+		// alerts actually addressed to them ('self'/explicit picks for an
+		// account-level alert, staff/landlord-of-entity for a scoped one).
+		$alert_banners = $this->alert_dispatcher->banners_for( $restrict_to_property_ids, null, $user_id );
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/dashboard.php';
 	}

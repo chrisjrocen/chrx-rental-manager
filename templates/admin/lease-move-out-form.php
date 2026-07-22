@@ -4,6 +4,8 @@
  * Variables in scope: $lease (array), $unit (array), $tenant (?array),
  * $deposit_held (float), $outstanding_rent (float), $list_url (string),
  * $notice (?string).
+ * v2 (SPEC.md §4.10): $active_notice (?array), $notice_shortfall_preview
+ * (float — computed against today's date, informational only).
  *
  * @package ChrxRentalManager
  */
@@ -36,6 +38,29 @@ $tenant_name = null === $tenant ? '' : $tenant['full_name'];
 		<input type="hidden" name="lease_id" value="<?php echo esc_attr( (string) $lease['id'] ); ?>">
 		<?php wp_nonce_field( LeaseMoveOutController::nonce_action() ); ?>
 
+		<?php if ( null !== $active_notice ) : ?>
+			<div class="chrx-rm-admin__info-banner" style="margin-bottom:16px;">
+				<?php
+				printf(
+					/* translators: 1: notice date, 2: earliest move-out date */
+					esc_html__( 'Active move-out notice on file: given %1$s, earliest move-out date %2$s.', 'chrx-rental-manager' ),
+					esc_html( gmdate( 'j M Y', strtotime( $active_notice['notice_date'] ) ) ),
+					esc_html( gmdate( 'j M Y', strtotime( $active_notice['earliest_move_out_date'] ) ) )
+				);
+				?>
+				<?php if ( $notice_shortfall_preview > 0 ) : ?>
+					<br>
+					<?php
+					printf(
+						/* translators: %s: shortfall amount */
+						esc_html__( 'Leaving before that date (as of today) would add a %s rent shortfall — recalculated against whatever move-out date is actually submitted below.', 'chrx-rental-manager' ),
+						esc_html( \ChrxRentalManager\Admin\Support\Money::format( $notice_shortfall_preview ) )
+					);
+					?>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
+
 		<div style="display:grid;grid-template-columns:1fr 380px;gap:22px;">
 			<div class="chrx-rm-panel">
 				<div class="chrx-rm-panel__body">
@@ -50,7 +75,7 @@ $tenant_name = null === $tenant ? '' : $tenant['full_name'];
 								<select id="rm_unit_status" name="rm_unit_status">
 									<option value="<?php echo esc_attr( Unit::STATUS_VACANT ); ?>"><?php esc_html_e( 'Vacant', 'chrx-rental-manager' ); ?></option>
 									<option value="<?php echo esc_attr( Unit::STATUS_MAINTENANCE ); ?>"><?php esc_html_e( 'Under Maintenance', 'chrx-rental-manager' ); ?></option>
-									<option value="<?php echo esc_attr( Unit::STATUS_RESERVED ); ?>"><?php esc_html_e( 'Reserved', 'chrx-rental-manager' ); ?></option>
+									<option value="<?php echo esc_attr( Unit::STATUS_BOOKED ); ?>"><?php esc_html_e( 'Booked', 'chrx-rental-manager' ); ?></option>
 								</select>
 							</td>
 						</tr>
@@ -75,6 +100,16 @@ $tenant_name = null === $tenant ? '' : $tenant['full_name'];
 							<span id="rm-refund" style="color:#0a7d34;"><?php echo esc_html( Money::format( max( 0, $deposit_held - $outstanding_rent ) ) ); ?></span>
 						</div>
 					</div>
+
+					<?php if ( null !== $active_notice ) : ?>
+						<div style="margin-top:20px;background:#fbf0dd;border:1px solid #ecd9ad;border-radius:6px;padding:12px 14px;">
+							<label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;font-weight:600;margin-bottom:8px;">
+								<input type="checkbox" id="rm_waive_shortfall" name="rm_waive_shortfall" value="1" style="margin-top:2px;">
+								<?php esc_html_e( 'Waive the notice-period rent shortfall (if the move-out date is before the earliest move-out date)', 'chrx-rental-manager' ); ?>
+							</label>
+							<input type="text" id="rm_waiver_reason" name="rm_waiver_reason" placeholder="<?php esc_attr_e( 'Reason for waiving (required if waiving)', 'chrx-rental-manager' ); ?>" style="width:100%;box-sizing:border-box;">
+						</div>
+					<?php endif; ?>
 
 					<div style="margin-top:20px;">
 						<label for="rm_refund_method" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;"><?php esc_html_e( 'Refund method', 'chrx-rental-manager' ); ?></label>

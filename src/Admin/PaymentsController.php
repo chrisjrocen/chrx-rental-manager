@@ -6,6 +6,7 @@ namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Admin\Support\Csv;
 use ChrxRentalManager\Admin\Support\FlashNotice;
+use ChrxRentalManager\Admin\Support\Settings;
 use ChrxRentalManager\Billing\PaymentAllocator;
 use ChrxRentalManager\Billing\ReceiptMailer;
 use ChrxRentalManager\Billing\ReceiptPdf;
@@ -33,6 +34,7 @@ final class PaymentsController {
 	private const EXPORT_ACTION   = 'rm_payments_export_csv';
 	private const EMAIL_ACTION    = 'rm_email_receipt';
 	private const DOWNLOAD_ACTION = 'rm_download_receipt';
+	private const PRINT_ACTION    = 'rm_print_receipt';
 	private const VOID_ACTION     = 'rm_void_payment';
 
 	private Payment $payments;
@@ -74,6 +76,7 @@ final class PaymentsController {
 		add_action( 'admin_post_' . self::EXPORT_ACTION, array( $this, 'handle_export_csv' ) );
 		add_action( 'admin_post_' . self::EMAIL_ACTION, array( $this, 'handle_email_receipt' ) );
 		add_action( 'admin_post_' . self::DOWNLOAD_ACTION, array( $this, 'handle_download_receipt' ) );
+		add_action( 'admin_post_' . self::PRINT_ACTION, array( $this, 'handle_print_receipt' ) );
 		add_action( 'admin_post_' . self::VOID_ACTION, array( $this, 'handle_void_payment' ) );
 	}
 
@@ -188,6 +191,17 @@ final class PaymentsController {
 				admin_url( 'admin-post.php' )
 			),
 			self::EMAIL_ACTION . '_' . $receipt_id
+		);
+
+		$print_url = wp_nonce_url(
+			add_query_arg(
+				array(
+					'action' => self::PRINT_ACTION,
+					'id'     => $receipt_id,
+				),
+				admin_url( 'admin-post.php' )
+			),
+			self::PRINT_ACTION . '_' . $receipt_id
 		);
 
 		$list_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
@@ -396,6 +410,38 @@ final class PaymentsController {
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streaming a plugin-generated PDF from wp-content/uploads, not fetching a remote URL.
 		readfile( $absolute_path );
+		exit;
+	}
+
+	public function handle_print_receipt(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified below via check_admin_referer() once $receipt_id is known.
+		$receipt_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+		check_admin_referer( self::PRINT_ACTION . '_' . $receipt_id );
+
+		if ( ! current_user_can( RoleManager::CAP_MANAGE_PAYMENTS ) && ! current_user_can( RoleManager::CAP_VIEW_DASHBOARD ) ) {
+			wp_die( esc_html__( 'You do not have permission to print this receipt.', 'chrx-rental-manager' ), 403 );
+		}
+
+		$receipt = $this->authorize_receipt( $receipt_id );
+		$data    = $this->receipt_pdf->data_for_receipt( $receipt );
+
+		if ( null === $data ) {
+			wp_die( esc_html__( 'Payment not found.', 'chrx-rental-manager' ), 404 );
+		}
+
+		$paper_format = Settings::receipt_print_format();
+		$back_url     = add_query_arg(
+			array(
+				'page'   => self::PAGE_SLUG,
+				'action' => 'receipt',
+				'id'     => $receipt_id,
+			),
+			admin_url( 'admin.php' )
+		);
+
+		extract( $data, EXTR_SKIP ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract -- same include-with-scope pattern as ReceiptPdf::receipt_html(); the print template's variable contract is documented in its own header comment.
+
+		include \ChrxRentalManager\PLUGIN_DIR . '/templates/print/receipt.php';
 		exit;
 	}
 

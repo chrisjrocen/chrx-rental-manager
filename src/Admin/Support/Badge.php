@@ -22,7 +22,7 @@ final class Badge {
 		'occupied'    => 'Occupied',
 		'vacant'      => 'Vacant',
 		'maintenance' => 'Under Maintenance',
-		'reserved'    => 'Reserved',
+		'booked'      => 'Booked',
 		'paid'        => 'Paid',
 		'partial'     => 'Partial',
 		'unpaid'      => 'Unpaid',

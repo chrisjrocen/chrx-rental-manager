@@ -3,6 +3,7 @@
  * Units list (designs/08-units-list.html).
  * Variables in scope: $list_table (UnitsListTable), $properties (array),
  * $add_url (string), $can_manage (bool), $is_empty (bool), $notice (?string).
+ * v2: $all_tags (array<int,string>).
  *
  * @package ChrxRentalManager
  */
@@ -17,12 +18,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 $selected_property_id = isset( $_GET['property_id'] ) ? absint( $_GET['property_id'] ) : 0;
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter params, no state change.
 $selected_status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter params, no state change.
+$selected_occupancy_type = isset( $_GET['occupancy_type'] ) ? sanitize_key( wp_unslash( $_GET['occupancy_type'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter params, no state change.
+$selected_self_contained = isset( $_GET['self_contained'] ) ? sanitize_key( wp_unslash( $_GET['self_contained'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter params, no state change.
+$selected_tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 
 $statuses = array(
 	Unit::STATUS_OCCUPIED    => __( 'Occupied', 'chrx-rental-manager' ),
 	Unit::STATUS_VACANT      => __( 'Vacant', 'chrx-rental-manager' ),
 	Unit::STATUS_MAINTENANCE => __( 'Under Maintenance', 'chrx-rental-manager' ),
-	Unit::STATUS_RESERVED    => __( 'Reserved', 'chrx-rental-manager' ),
+	Unit::STATUS_BOOKED      => __( 'Booked', 'chrx-rental-manager' ),
+);
+
+$occupancy_types = array(
+	Unit::OCCUPANCY_SINGLE => __( 'Single', 'chrx-rental-manager' ),
+	Unit::OCCUPANCY_DOUBLE => __( 'Double', 'chrx-rental-manager' ),
+	Unit::OCCUPANCY_FAMILY => __( 'Family', 'chrx-rental-manager' ),
 );
 ?>
 <div class="wrap chrx-rm-admin">
@@ -65,6 +78,25 @@ $statuses = array(
 						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $selected_status, $key ); ?>><?php echo esc_html( $label ); ?></option>
 					<?php endforeach; ?>
 				</select>
+				<select name="occupancy_type" onchange="this.form.submit()">
+					<option value=""><?php esc_html_e( 'Any occupancy type', 'chrx-rental-manager' ); ?></option>
+					<?php foreach ( $occupancy_types as $key => $label ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $selected_occupancy_type, $key ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<select name="self_contained" onchange="this.form.submit()">
+					<option value=""><?php esc_html_e( 'Self-contained: any', 'chrx-rental-manager' ); ?></option>
+					<option value="1" <?php selected( $selected_self_contained, '1' ); ?>><?php esc_html_e( 'Self-contained only', 'chrx-rental-manager' ); ?></option>
+					<option value="0" <?php selected( $selected_self_contained, '0' ); ?>><?php esc_html_e( 'Shared only', 'chrx-rental-manager' ); ?></option>
+				</select>
+				<?php if ( array() !== $all_tags ) : ?>
+					<select name="tag" onchange="this.form.submit()">
+						<option value=""><?php esc_html_e( 'Any amenity', 'chrx-rental-manager' ); ?></option>
+						<?php foreach ( $all_tags as $amenity_tag ) : ?>
+							<option value="<?php echo esc_attr( $amenity_tag ); ?>" <?php selected( $selected_tag, $amenity_tag ); ?>><?php echo esc_html( $amenity_tag ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				<?php endif; ?>
 				<?php $list_table->search_box( __( 'Search units…', 'chrx-rental-manager' ), 'rm-units' ); ?>
 				<span class="chrx-rm-list-toolbar__count">
 					<?php

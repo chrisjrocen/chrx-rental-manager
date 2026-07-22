@@ -43,6 +43,13 @@ final class PaymentAllocator {
 	 * and $amount exceeds that charge's outstanding balance, the excess
 	 * becomes a second, unallocated credit payment.
 	 *
+	 * v2 (SPEC.md §4.9): $recorded_by is nullable — a Nylon Pay webhook
+	 * records a payment with no staff user behind it ("recorded_by null
+	 * for webhook-recorded payments," §3.1) — and $gateway_transaction_id
+	 * links the primary payment row back to its rm_gateway_transactions
+	 * row; both default to the pre-v2 manual-payment shape (a real user,
+	 * no gateway link) so every existing call site keeps working unchanged.
+	 *
 	 * @return array{primary_payment_id:int,credit_payment_id:?int,credit_applied:float}
 	 *               primary_payment_id represents the full transaction for
 	 *               receipt purposes; credit_applied is the portion (if
@@ -54,8 +61,9 @@ final class PaymentAllocator {
 		float $amount,
 		string $method,
 		string $reference_note,
-		int $recorded_by,
-		string $paid_at
+		?int $recorded_by,
+		string $paid_at,
+		?int $gateway_transaction_id = null
 	): array {
 		$primary_amount = $amount;
 		$excess         = 0.0;
@@ -81,10 +89,13 @@ final class PaymentAllocator {
 			$excess         = 0.0;
 		}
 
-		$primary_payment_id = $this->insert_payment( $lease_id, $charge_id, $primary_amount, $method, $reference_note, $recorded_by, $paid_at );
+		$primary_payment_id = $this->insert_payment( $lease_id, $charge_id, $primary_amount, $method, $reference_note, $recorded_by, $paid_at, $gateway_transaction_id );
 		$credit_payment_id  = null;
 
 		if ( $excess > 0 ) {
+			// The split-off credit row is not itself "the" gateway payment
+			// (the primary row already carries that link) — it stays
+			// gateway_transaction_id = null like any other unallocated credit.
 			$credit_payment_id = $this->insert_payment( $lease_id, null, $excess, $method, $reference_note, $recorded_by, $paid_at );
 		}
 
@@ -131,6 +142,8 @@ final class PaymentAllocator {
 			$credit_amount = (float) $credit['amount'];
 			$applied       = min( $credit_amount, $remaining_need );
 
+			$credit_recorded_by = null === $credit['recorded_by'] ? null : (int) $credit['recorded_by'];
+
 			if ( $applied >= $credit_amount ) {
 				$this->payments->update( (int) $credit['id'], array( 'charge_id' => $charge_id ) );
 			} else {
@@ -141,7 +154,7 @@ final class PaymentAllocator {
 					$applied,
 					$credit['method'],
 					$credit['reference_note'],
-					(int) $credit['recorded_by'],
+					$credit_recorded_by,
 					$credit['paid_at']
 				);
 			}
@@ -186,19 +199,21 @@ final class PaymentAllocator {
 		float $amount,
 		string $method,
 		string $reference_note,
-		int $recorded_by,
-		string $paid_at
+		?int $recorded_by,
+		string $paid_at,
+		?int $gateway_transaction_id = null
 	): int {
 		$id = $this->payments->insert(
 			array(
-				'lease_id'       => $lease_id,
-				'charge_id'      => $charge_id,
-				'amount'         => $amount,
-				'method'         => $method,
-				'reference_note' => $reference_note,
-				'recorded_by'    => $recorded_by,
-				'receipt_id'     => null,
-				'paid_at'        => $paid_at,
+				'lease_id'               => $lease_id,
+				'charge_id'              => $charge_id,
+				'amount'                 => $amount,
+				'method'                 => $method,
+				'reference_note'         => $reference_note,
+				'recorded_by'            => $recorded_by,
+				'gateway_transaction_id' => $gateway_transaction_id,
+				'receipt_id'             => null,
+				'paid_at'                => $paid_at,
 			)
 		);
 

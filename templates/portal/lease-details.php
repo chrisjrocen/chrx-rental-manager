@@ -4,6 +4,8 @@
  *
  * Variables in scope: $tenant (array), $lease (array), $unit (?array),
  * $property (?array).
+ * v2 (SPEC.md §4.10 — move-out notices): $active_notice (?array),
+ * $notice_rent_owed (float), $notice_ok (?bool).
  *
  * @package ChrxRentalManager
  */
@@ -11,6 +13,7 @@
 use ChrxRentalManager\Admin\Support\Money;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Portal\PortalFormat;
+use ChrxRentalManager\Portal\PortalMoveOutNoticeController;
 use ChrxRentalManager\Portal\PortalShortcode;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -65,7 +68,7 @@ $deposit_pill   = 'paid' === $deposit_status ? 'chrx-rm-portal__pill--ok' : 'chr
 				</div>
 			<?php endif; ?>
 			<div class="chrx-rm-portal__card-row">
-				<span class="chrx-rm-portal__card-row-label"><?php esc_html_e( 'Monthly rent', 'chrx-rental-manager' ); ?></span>
+				<span class="chrx-rm-portal__card-row-label"><?php esc_html_e( 'Rent per billing period', 'chrx-rental-manager' ); ?></span>
 				<span class="chrx-rm-portal__card-row-value"><?php echo esc_html( Money::format( (float) $lease['rent_amount'] ) ); ?></span>
 			</div>
 			<div class="chrx-rm-portal__card-row">
@@ -97,5 +100,55 @@ $deposit_pill   = 'paid' === $deposit_status ? 'chrx-rm-portal__pill--ok' : 'chr
 				</span>
 			</div>
 		</div>
+
+		<?php if ( null !== $notice_ok ) : ?>
+			<div class="chrx-rm-portal__card" style="background:<?php echo $notice_ok ? '#e5f5eb' : '#fdf5f5'; ?>;">
+				<?php echo $notice_ok ? esc_html__( 'Done.', 'chrx-rental-manager' ) : esc_html__( 'That could not be completed — please try again.', 'chrx-rental-manager' ); ?>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( Lease::STATUS_ACTIVE === $lease['status'] ) : ?>
+			<div class="chrx-rm-portal__card">
+				<div class="chrx-rm-portal__card-title"><?php esc_html_e( 'Move-out notice', 'chrx-rental-manager' ); ?></div>
+
+				<?php if ( null !== $active_notice ) : ?>
+					<div class="chrx-rm-portal__card-row">
+						<span class="chrx-rm-portal__card-row-label"><?php esc_html_e( 'Notice given', 'chrx-rental-manager' ); ?></span>
+						<span class="chrx-rm-portal__card-row-value"><?php echo esc_html( gmdate( 'j M Y', strtotime( $active_notice['notice_date'] ) ) ); ?></span>
+					</div>
+					<div class="chrx-rm-portal__card-row">
+						<span class="chrx-rm-portal__card-row-label"><?php esc_html_e( 'Earliest move-out date', 'chrx-rental-manager' ); ?></span>
+						<span class="chrx-rm-portal__card-row-value"><?php echo esc_html( gmdate( 'j M Y', strtotime( $active_notice['earliest_move_out_date'] ) ) ); ?></span>
+					</div>
+					<?php if ( $notice_rent_owed > 0 ) : ?>
+						<div class="chrx-rm-portal__card-row">
+							<span class="chrx-rm-portal__card-row-label"><?php esc_html_e( 'Rent owed through notice period', 'chrx-rental-manager' ); ?></span>
+							<span class="chrx-rm-portal__card-row-value"><?php echo esc_html( Money::format( $notice_rent_owed ) ); ?></span>
+						</div>
+					<?php endif; ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:12px;" onsubmit="return confirm('<?php echo esc_js( __( 'Cancel this move-out notice?', 'chrx-rental-manager' ) ); ?>');">
+						<input type="hidden" name="action" value="rm_portal_cancel_notice">
+						<input type="hidden" name="rm_notice_id" value="<?php echo esc_attr( (string) $active_notice['id'] ); ?>">
+						<?php wp_nonce_field( PortalMoveOutNoticeController::cancel_notice_action_for( (int) $active_notice['id'] ) ); ?>
+						<button type="submit" class="chrx-rm-portal__pay-now-button" style="background:#8c8f94;"><?php esc_html_e( 'Cancel notice', 'chrx-rental-manager' ); ?></button>
+					</form>
+				<?php else : ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="rm_portal_give_notice">
+						<input type="hidden" name="rm_lease_id" value="<?php echo esc_attr( (string) $lease['id'] ); ?>">
+						<?php wp_nonce_field( PortalMoveOutNoticeController::give_notice_action() ); ?>
+						<label style="display:block;font-size:12px;color:#646970;margin-bottom:4px;">
+							<?php esc_html_e( 'Preferred move-out date (optional)', 'chrx-rental-manager' ); ?>
+							<input type="date" name="rm_requested_move_out_date" style="display:block;width:100%;margin-top:4px;">
+						</label>
+						<label style="display:block;font-size:12px;color:#646970;margin:8px 0 4px;">
+							<?php esc_html_e( 'Notes (optional)', 'chrx-rental-manager' ); ?>
+							<textarea name="rm_notes" rows="2" style="display:block;width:100%;margin-top:4px;"></textarea>
+						</label>
+						<button type="submit" class="chrx-rm-portal__pay-now-button"><?php esc_html_e( 'Give notice', 'chrx-rental-manager' ); ?></button>
+					</form>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
 	</div>
 </div>

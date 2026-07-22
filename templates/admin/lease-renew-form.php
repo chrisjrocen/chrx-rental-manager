@@ -57,10 +57,16 @@ $current_rent = (float) $old_lease['rent_amount'];
 				<td><input type="date" id="rm_end_date" name="rm_end_date" value="<?php echo esc_attr( $new_end->format( 'Y-m-d' ) ); ?>" required></td>
 			</tr>
 			<tr>
-				<th><label for="rm_rent_amount"><?php esc_html_e( 'Monthly rent', 'chrx-rental-manager' ); ?></label></th>
+				<th><label for="rm_rent_amount"><?php esc_html_e( 'Rent per billing period', 'chrx-rental-manager' ); ?></label></th>
 				<td>
 					<input type="text" id="rm_rent_amount" name="rm_rent_amount" value="<?php echo esc_attr( (string) $current_rent ); ?>" style="width:180px;" required>
 					<span id="rm-rent-delta" style="font-size:13px;font-weight:600;margin-left:10px;"></span>
+				</td>
+			</tr>
+			<tr>
+				<th><?php esc_html_e( 'Billing cycle', 'chrx-rental-manager' ); ?></th>
+				<td>
+					<p class="description"><?php esc_html_e( 'Carried over from the expiring lease and cannot be changed on renewal.', 'chrx-rental-manager' ); ?></p>
 				</td>
 			</tr>
 			<tr>

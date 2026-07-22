@@ -4,7 +4,7 @@
  * Variables in scope: $action ('add'|'edit'), $user (?WP_User),
  * $current_role (?string), $assigned_ids (array<int,int>),
  * $all_properties (array<int,array<string,mixed>>), $list_url (string),
- * $notice (?string).
+ * $notice (?string), $whatsapp_number (string).
  *
  * @package ChrxRentalManager
  */
@@ -47,6 +47,13 @@ $is_edit = 'edit' === $action;
 		<?php endif; ?>
 
 		<table class="form-table">
+			<tr>
+				<th><label for="rm_whatsapp_number"><?php esc_html_e( 'WhatsApp number', 'chrx-rental-manager' ); ?></label></th>
+				<td>
+					<input type="text" id="rm_whatsapp_number" name="rm_whatsapp_number" class="regular-text" value="<?php echo esc_attr( $whatsapp_number ); ?>">
+					<p class="description"><?php esc_html_e( 'Optional. Local or international format — normalized automatically.', 'chrx-rental-manager' ); ?></p>
+				</td>
+			</tr>
 			<tr>
 				<th><?php esc_html_e( 'Role', 'chrx-rental-manager' ); ?></th>
 				<td>

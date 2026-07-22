@@ -5,7 +5,9 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Admin\Support;
 
 use ChrxRentalManager\Data\Charge;
+use ChrxRentalManager\Data\Expense;
 use ChrxRentalManager\Data\Lease;
+use ChrxRentalManager\Data\MoveOutNotice;
 use ChrxRentalManager\Data\Payment;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Data\Tenant;
@@ -35,6 +37,8 @@ final class Reports {
 	private Charge $charges;
 	private Payment $payments;
 	private Tenant $tenants;
+	private Expense $expenses;
+	private MoveOutNotice $notices;
 	private Ledger $ledger;
 
 	public function __construct(
@@ -44,6 +48,8 @@ final class Reports {
 		?Charge $charges = null,
 		?Payment $payments = null,
 		?Tenant $tenants = null,
+		?Expense $expenses = null,
+		?MoveOutNotice $notices = null,
 		?Ledger $ledger = null
 	) {
 		$this->properties = $properties ?? new Property();
@@ -52,6 +58,8 @@ final class Reports {
 		$this->charges    = $charges ?? new Charge();
 		$this->payments   = $payments ?? new Payment();
 		$this->tenants    = $tenants ?? new Tenant();
+		$this->notices    = $notices ?? new MoveOutNotice();
+		$this->expenses   = $expenses ?? new Expense();
 		$this->ledger     = $ledger ?? new Ledger( $this->charges, $this->payments, $this->leases );
 	}
 
@@ -69,6 +77,28 @@ final class Reports {
 			'occupied' => $occupied,
 			'total'    => $total,
 			'rate'     => $total > 0 ? (int) round( $occupied / $total * 100 ) : 0,
+		);
+	}
+
+	/**
+	 * v2 (SPEC.md §4.1/§4.4): "Occupancy reporting counts beds (sum of
+	 * capacity) vs. filled beds (active leases), not just units" — the
+	 * hostel/per-bed complement to occupancy()'s unit-count view, which
+	 * SPEC.md §4.4 says stays available alongside this one, not replaced.
+	 *
+	 * @param array<int,int>|null $property_ids
+	 *
+	 * @return array{filled:int,total:int,rate:int}
+	 */
+	public function occupancy_beds( ?array $property_ids ): array {
+		$units  = $this->units_in_scope( $property_ids );
+		$total  = array_sum( array_map( static fn( array $u ): int => max( 1, (int) $u['capacity'] ), $units ) );
+		$filled = count( $this->leases_in_scope( $property_ids, Lease::STATUS_ACTIVE ) );
+
+		return array(
+			'filled' => $filled,
+			'total'  => $total,
+			'rate'   => $total > 0 ? (int) round( $filled / $total * 100 ) : 0,
 		);
 	}
 
@@ -241,6 +271,95 @@ final class Reports {
 					}
 
 					return true;
+				}
+			)
+		);
+	}
+
+	/**
+	 * v2 (SPEC.md §4.4): "Dashboard: ... plus monthly expense total, net
+	 * income figure." Non-voided expenses for the current calendar month,
+	 * scoped by $property_ids via expenses_in_scope() — which excludes
+	 * account-scoped rows for any restricted (Staff/Landlord) caller, per
+	 * SPEC.md's "account-scoped expenses appear only on admin-level
+	 * reports" rule.
+	 *
+	 * @param array<int,int>|null $property_ids
+	 *
+	 * @return array{total:float,count:int}
+	 */
+	public function monthly_expense_total( ?array $property_ids ): array {
+		$from = current_time( 'Y-m-01' );
+		$to   = gmdate( 'Y-m-t', strtotime( $from ) );
+		$rows = $this->expenses_in_scope( $property_ids, $from, $to );
+
+		return array(
+			'total' => array_sum( array_column( $rows, 'amount' ) ),
+			'count' => count( $rows ),
+		);
+	}
+
+	/**
+	 * v2 (SPEC.md §4.4): collected-this-month minus this-month's expenses,
+	 * both scoped identically via $property_ids.
+	 *
+	 * @param array<int,int>|null $property_ids
+	 */
+	public function net_income( ?array $property_ids ): float {
+		return $this->collected_this_month( $property_ids )['total'] - $this->monthly_expense_total( $property_ids )['total'];
+	}
+
+	/**
+	 * Non-voided expenses in [from, to], scoped by $property_ids exactly
+	 * like every other method here: null = unrestricted (every scope,
+	 * including account-wide), an array = restrict to those properties'
+	 * own property-/unit-scoped expenses only — account-scoped rows
+	 * (property_id null) are never included for a restricted caller
+	 * (SPEC.md §4.4), since "allocating shared costs across owners is a
+	 * business decision the software should not guess at."
+	 *
+	 * @param array<int,int>|null $property_ids
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function expenses_in_scope( ?array $property_ids, string $from_date, string $to_date ): array {
+		$rows = $this->expenses->for_report( $from_date, $to_date );
+
+		if ( null === $property_ids ) {
+			return $rows;
+		}
+
+		return array_values(
+			array_filter(
+				$rows,
+				static fn( array $e ): bool => null !== $e['property_id'] && in_array( (int) $e['property_id'], $property_ids, true )
+			)
+		);
+	}
+
+	/**
+	 * v2 (SPEC.md §4.10/§5): active move-out notices, for the dashboard's
+	 * flag/panel — scoped exactly like every other method here.
+	 *
+	 * @param array<int,int>|null $property_ids
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function active_move_out_notices( ?array $property_ids ): array {
+		$notices = $this->notices->all_active();
+
+		if ( null === $property_ids ) {
+			return $notices;
+		}
+
+		return array_values(
+			array_filter(
+				$notices,
+				function ( array $notice_row ) use ( $property_ids ): bool {
+					$lease = $this->leases->find( (int) $notice_row['lease_id'] );
+					$unit  = null !== $lease ? $this->units->find( (int) $lease['unit_id'] ) : null;
+
+					return null !== $unit && in_array( (int) $unit['property_id'], $property_ids, true );
 				}
 			)
 		);

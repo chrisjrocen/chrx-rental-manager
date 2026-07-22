@@ -122,9 +122,36 @@ final class ReceiptPdf {
 	}
 
 	/**
-	 * @param array<string,mixed> $payment
+	 * Builds the same template-ready data set render_pdf() feeds Dompdf,
+	 * for reuse by the print-CSS HTML view (Admin\PaymentsController's and
+	 * Portal\PortalReceiptPrint's "Print" actions) — a fresh render off
+	 * current payment/lease/tenant data rather than the stored PDF bytes,
+	 * so it always reflects e.g. a tenant renamed after the fact.
+	 *
+	 * $credit_applied isn't persisted on the rm_receipts row, so a
+	 * historical overpayment's "held as credit" line can only be
+	 * reconstructed at generation time (render_pdf()) — the print view
+	 * always passes 0.0 here and simply won't show that line for older
+	 * receipts. The PDF itself (already rendered and stored) is
+	 * unaffected and keeps showing it correctly.
+	 *
+	 * @return array<string,mixed>|null null if the receipt's payment no longer exists.
 	 */
-	private function render_pdf( array $payment, string $receipt_number, float $credit_applied ): string {
+	public function data_for_receipt( array $receipt ): ?array {
+		$payment = $this->payments->find( (int) $receipt['payment_id'] );
+
+		if ( null === $payment ) {
+			return null;
+		}
+
+		return $this->build_receipt_data( $payment, (string) $receipt['receipt_number'], 0.0 );
+	}
+
+	/**
+	 * @param array<string,mixed> $payment
+	 * @return array<string,mixed>
+	 */
+	private function build_receipt_data( array $payment, string $receipt_number, float $credit_applied ): array {
 		$lease    = $this->leases->find( (int) $payment['lease_id'] );
 		$charge   = null !== $payment['charge_id'] ? $this->charges->find( (int) $payment['charge_id'] ) : null;
 		$unit     = null !== $lease ? $this->units->find( (int) $lease['unit_id'] ) : null;
@@ -144,24 +171,29 @@ final class ReceiptPdf {
 
 		$total = (float) $payment['amount'] + $credit_applied;
 
-		$html = $this->receipt_html(
-			array(
-				'receipt_number'  => $receipt_number,
-				'company_name'    => Settings::company_name(),
-				'company_address' => Settings::company_address(),
-				'company_phone'   => Settings::company_phone(),
-				'tenant_name'     => null === $tenant ? '' : $tenant['full_name'],
-				'unit_label'      => null === $unit ? '' : $unit['unit_label'],
-				'property_name'   => null === $property ? '' : $property['name'],
-				'paid_at'         => $payment['paid_at'],
-				'line_label'      => $line_label,
-				'amount'          => Money::format( (float) $payment['amount'] ),
-				'credit_applied'  => $credit_applied > 0 ? Money::format( $credit_applied ) : null,
-				'total'           => Money::format( $total ),
-				'method'          => $payment['method'],
-				'balance'         => Money::format( $balance ),
-			)
+		return array(
+			'receipt_number'  => $receipt_number,
+			'company_name'    => Settings::company_name(),
+			'company_address' => Settings::company_address(),
+			'company_phone'   => Settings::company_phone(),
+			'tenant_name'     => null === $tenant ? '' : $tenant['full_name'],
+			'unit_label'      => null === $unit ? '' : $unit['unit_label'],
+			'property_name'   => null === $property ? '' : $property['name'],
+			'paid_at'         => $payment['paid_at'],
+			'line_label'      => $line_label,
+			'amount'          => Money::format( (float) $payment['amount'] ),
+			'credit_applied'  => $credit_applied > 0 ? Money::format( $credit_applied ) : null,
+			'total'           => Money::format( $total ),
+			'method'          => $payment['method'],
+			'balance'         => Money::format( $balance ),
 		);
+	}
+
+	/**
+	 * @param array<string,mixed> $payment
+	 */
+	private function render_pdf( array $payment, string $receipt_number, float $credit_applied ): string {
+		$html = $this->receipt_html( $this->build_receipt_data( $payment, $receipt_number, $credit_applied ) );
 
 		$options = new Options();
 		$options->set( 'isRemoteEnabled', false );

@@ -5,6 +5,8 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Admin\Support\FlashNotice;
+use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Communications\PhoneNumber;
 use ChrxRentalManager\Data\Document;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\Tenant;
@@ -253,7 +255,19 @@ final class TenantsController {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$national_id = isset( $_POST['rm_national_id'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_national_id'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$whatsapp_number_raw = isset( $_POST['rm_whatsapp_number'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_whatsapp_number'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$next_of_kin_name = isset( $_POST['rm_next_of_kin_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_next_of_kin_name'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$next_of_kin_phone = isset( $_POST['rm_next_of_kin_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_next_of_kin_phone'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$next_of_kin_relationship = isset( $_POST['rm_next_of_kin_relationship'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_next_of_kin_relationship'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$send_invite = ! empty( $_POST['rm_send_invite'] );
+
+		$whatsapp_number = '' !== $whatsapp_number_raw
+			? PhoneNumber::normalize_e164( $whatsapp_number_raw, Settings::whatsapp_default_country_code() )
+			: null;
 
 		$back_to_form = add_query_arg(
 			array(
@@ -275,10 +289,14 @@ final class TenantsController {
 		}
 
 		$data = array(
-			'full_name'   => $full_name,
-			'phone'       => $phone,
-			'email'       => $email,
-			'national_id' => $national_id,
+			'full_name'                => $full_name,
+			'phone'                    => $phone,
+			'email'                    => $email,
+			'national_id'              => $national_id,
+			'whatsapp_number'          => $whatsapp_number,
+			'next_of_kin_name'         => '' !== $next_of_kin_name ? $next_of_kin_name : null,
+			'next_of_kin_phone'        => '' !== $next_of_kin_phone ? $next_of_kin_phone : null,
+			'next_of_kin_relationship' => '' !== $next_of_kin_relationship ? $next_of_kin_relationship : null,
 		);
 
 		$is_new = 0 === $tenant_id;

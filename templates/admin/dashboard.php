@@ -8,6 +8,10 @@
  * (array{total,lease_count,overdue_count}), $collected
  * (array{total,count}), $expiring (array<int,array> lease rows),
  * $recent (array<int,array> payment rows).
+ * v2: $occupancy_beds (array{filled,total,rate}), $monthly_expenses
+ * (array{total,count}), $net_income (float), $alert_banners
+ * (array<int,array> — active custom alerts addressed to this viewer).
+ * v2 (move-out notices): $active_move_out_notices (array<int,array>).
  *
  * @package ChrxRentalManager
  */
@@ -55,7 +59,57 @@ $payments = new Payment();
 		</div>
 	<?php endif; ?>
 
-	<div class="chrx-rm-stat-grid" style="grid-template-columns:repeat(4,1fr);">
+	<?php foreach ( $alert_banners as $alert_banner ) : ?>
+		<div class="chrx-rm-admin__info-banner" style="margin-bottom:12px;">
+			<strong><?php echo esc_html( $alert_banner['title'] ); ?></strong>
+			<div><?php echo esc_html( $alert_banner['message'] ); ?></div>
+		</div>
+	<?php endforeach; ?>
+
+	<?php if ( array() !== $active_move_out_notices ) : ?>
+		<div class="chrx-rm-admin__info-banner" style="margin-bottom:20px;">
+			<strong>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %d: number of active move-out notices */
+						_n( '%d active move-out notice', '%d active move-out notices', count( $active_move_out_notices ), 'chrx-rental-manager' ),
+						count( $active_move_out_notices )
+					)
+				);
+				?>
+			</strong>
+			<ul style="margin:6px 0 0 18px;">
+				<?php foreach ( $active_move_out_notices as $notice_row ) : ?>
+					<?php
+					$notice_lease  = $leases->find( (int) $notice_row['lease_id'] );
+					$notice_unit   = null !== $notice_lease ? $units->find( (int) $notice_lease['unit_id'] ) : null;
+					$notice_tenant = null !== $notice_lease ? $tenants->find( (int) $notice_lease['tenant_id'] ) : null;
+					?>
+					<li>
+						<a href="
+						<?php
+						echo esc_url(
+							add_query_arg(
+								array(
+									'page' => 'chrx-rm-leases',
+									'id'   => $notice_row['lease_id'],
+								),
+								admin_url( 'admin.php' )
+							)
+						);
+						?>
+									">
+							<?php echo esc_html( ( null === $notice_tenant ? '' : $notice_tenant['full_name'] ) . ( null === $notice_unit ? '' : ' — Unit ' . $notice_unit['unit_label'] ) ); ?>
+						</a>
+						&mdash; <?php echo esc_html( sprintf( /* translators: %s: earliest move-out date */ __( 'earliest move-out %s', 'chrx-rental-manager' ), gmdate( 'j M Y', strtotime( $notice_row['earliest_move_out_date'] ) ) ) ); ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+	<?php endif; ?>
+
+	<div class="chrx-rm-stat-grid" style="grid-template-columns:repeat(3,1fr);">
 		<div class="chrx-rm-stat-card">
 			<div class="chrx-rm-stat-card__label"><?php esc_html_e( 'Occupancy rate', 'chrx-rental-manager' ); ?></div>
 			<div class="chrx-rm-stat-card__value"><?php echo esc_html( (string) $occupancy['rate'] ); ?>%</div>
@@ -66,6 +120,19 @@ $payments = new Payment();
 					esc_html__( '%1$d of %2$d units occupied', 'chrx-rental-manager' ),
 					(int) $occupancy['occupied'],
 					(int) $occupancy['total']
+				);
+				?>
+			</div>
+			<div style="font-size:12px;color:#646970;margin-top:2px;">
+				<?php
+				// SPEC.md §4.4: beds-based occupancy alongside the unit-count
+				// view above — active leases ÷ total capacity, not just units.
+				printf(
+					/* translators: 1: filled beds, 2: total beds, 3: beds occupancy rate */
+					esc_html__( '%1$d of %2$d beds filled (%3$d%%)', 'chrx-rental-manager' ),
+					(int) $occupancy_beds['filled'],
+					(int) $occupancy_beds['total'],
+					(int) $occupancy_beds['rate']
 				);
 				?>
 			</div>
@@ -95,6 +162,18 @@ $payments = new Payment();
 			<div class="chrx-rm-stat-card__label"><?php esc_html_e( 'Expiring soon', 'chrx-rental-manager' ); ?></div>
 			<div class="chrx-rm-stat-card__value"><?php echo esc_html( (string) count( $expiring ) ); ?></div>
 			<div style="font-size:12px;color:#646970;margin-top:6px;"><?php esc_html_e( 'leases end in next 30 days', 'chrx-rental-manager' ); ?></div>
+		</div>
+		<div class="chrx-rm-stat-card">
+			<div class="chrx-rm-stat-card__label"><?php echo esc_html( sprintf( /* translators: %s: current month */ __( 'Expenses · %s', 'chrx-rental-manager' ), gmdate( 'M Y', strtotime( current_time( 'Y-m-d' ) ) ) ) ); ?></div>
+			<div class="chrx-rm-stat-card__value" style="color:#b32d2e;"><?php echo esc_html( Money::format( (float) $monthly_expenses['total'] ) ); ?></div>
+			<div style="font-size:12px;color:#646970;margin-top:6px;">
+				<?php echo esc_html( sprintf( /* translators: %d: expense count */ _n( 'from %d expense', 'from %d expenses', (int) $monthly_expenses['count'], 'chrx-rental-manager' ), (int) $monthly_expenses['count'] ) ); ?>
+			</div>
+		</div>
+		<div class="chrx-rm-stat-card">
+			<div class="chrx-rm-stat-card__label"><?php esc_html_e( 'Net income · this month', 'chrx-rental-manager' ); ?></div>
+			<div class="chrx-rm-stat-card__value" style="<?php echo $net_income >= 0 ? 'color:#0a7d34;' : 'color:#b32d2e;'; ?>"><?php echo esc_html( Money::format( $net_income ) ); ?></div>
+			<div style="font-size:12px;color:#646970;margin-top:6px;"><?php esc_html_e( 'collected minus expenses', 'chrx-rental-manager' ); ?></div>
 		</div>
 	</div>
 

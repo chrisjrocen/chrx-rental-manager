@@ -5,7 +5,9 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Admin\Support\PortalStatus;
+use ChrxRentalManager\Admin\Support\Settings;
 use ChrxRentalManager\Auth\Pages;
+use ChrxRentalManager\Communications\Notifier;
 use ChrxRentalManager\Data\Lease;
 use ChrxRentalManager\Data\NotificationLog;
 use ChrxRentalManager\Data\Tenant;
@@ -39,6 +41,7 @@ final class TenantInviteController {
 	private Access $access;
 	private Pages $pages;
 	private NotificationLog $notifications;
+	private Notifier $notifier;
 
 	public function __construct(
 		?Tenant $tenants = null,
@@ -46,7 +49,8 @@ final class TenantInviteController {
 		?Unit $units = null,
 		?Access $access = null,
 		?Pages $pages = null,
-		?NotificationLog $notifications = null
+		?NotificationLog $notifications = null,
+		?Notifier $notifier = null
 	) {
 		$this->tenants       = $tenants ?? new Tenant();
 		$this->leases        = $leases ?? new Lease();
@@ -54,6 +58,7 @@ final class TenantInviteController {
 		$this->access        = $access ?? new Access();
 		$this->pages         = $pages ?? new Pages();
 		$this->notifications = $notifications ?? new NotificationLog();
+		$this->notifier      = $notifier ?? new Notifier( $this->notifications );
 	}
 
 	public function register(): void {
@@ -144,14 +149,7 @@ final class TenantInviteController {
 
 		$this->tenants->link_wp_user( $tenant_id, $user->ID );
 
-		$sent = $this->send_invite_email( $user, $tenant );
-
-		$this->notifications->record(
-			'portal_invite',
-			$tenant['email'],
-			$tenant_id,
-			$sent ? NotificationLog::STATUS_SENT : NotificationLog::STATUS_FAILED
-		);
+		$sent = $this->send_invite_email( $user, $tenant, 'portal_invite' );
 
 		if ( ! $sent ) {
 			return new \WP_Error( 'rm_email_failed', __( 'Portal account created, but the invite email could not be sent.', 'chrx-rental-manager' ) );
@@ -165,14 +163,7 @@ final class TenantInviteController {
 	 * @return true|\WP_Error
 	 */
 	private function resend( \WP_User $user, array $tenant ) {
-		$sent = $this->send_invite_email( $user, $tenant );
-
-		$this->notifications->record(
-			'portal_invite_resend',
-			$tenant['email'],
-			(int) $tenant['id'],
-			$sent ? NotificationLog::STATUS_SENT : NotificationLog::STATUS_FAILED
-		);
+		$sent = $this->send_invite_email( $user, $tenant, 'portal_invite_resend' );
 
 		if ( ! $sent ) {
 			return new \WP_Error( 'rm_email_failed', __( 'The invite email could not be sent.', 'chrx-rental-manager' ) );
@@ -249,7 +240,7 @@ final class TenantInviteController {
 	/**
 	 * @param array<string,mixed> $tenant
 	 */
-	private function send_invite_email( \WP_User $user, array $tenant ): bool {
+	private function send_invite_email( \WP_User $user, array $tenant, string $type ): bool {
 		$key = get_password_reset_key( $user );
 
 		if ( is_wp_error( $key ) ) {
@@ -264,6 +255,8 @@ final class TenantInviteController {
 			$this->pages->url( Pages::KEY_PORTAL_ACTIVATE )
 		);
 
+		$tenant_name = explode( ' ', trim( $tenant['full_name'] ) )[0] ?? $tenant['full_name'];
+
 		$subject = sprintf(
 			/* translators: %s: site name */
 			__( "You're invited to the %s tenant portal", 'chrx-rental-manager' ),
@@ -273,12 +266,23 @@ final class TenantInviteController {
 		$message = sprintf(
 			/* translators: 1: tenant first name, 2: site name, 3: activation link */
 			__( "Hi %1\$s,\n\nYou've been invited to the %2\$s tenant portal, where you can view your balance, lease details, and payment receipts.\n\nSet up your account:\n%3\$s\n\nIf you weren't expecting this, you can ignore this email.", 'chrx-rental-manager' ),
-			explode( ' ', trim( $tenant['full_name'] ) )[0] ?? $tenant['full_name'],
+			$tenant_name,
 			get_bloginfo( 'name' ),
 			$activate_url
 		);
 
-		return wp_mail( $tenant['email'], $subject, $message );
+		return $this->notifier->notify(
+			$type,
+			(int) $tenant['id'],
+			array(
+				'email'           => $tenant['email'],
+				'whatsapp_number' => $tenant['whatsapp_number'] ?? '',
+			),
+			$subject,
+			$message,
+			Settings::TEMPLATE_KEY_INVITE,
+			array( $tenant_name, get_bloginfo( 'name' ), $activate_url )
+		);
 	}
 
 	public static function nonce_action(): string {

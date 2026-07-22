@@ -5,6 +5,8 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Admin;
 
 use ChrxRentalManager\Admin\Support\FlashNotice;
+use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Communications\PhoneNumber;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Data\PropertyLandlord;
 use ChrxRentalManager\Data\PropertyStaff;
@@ -24,6 +26,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class StaffRolesController {
 
 	private const NONCE_ACTION = 'rm_staff_roles_save';
+
+	/**
+	 * WP user meta key for staff/landlord WhatsApp numbers (SPEC.md §2:
+	 * "staff and landlord WP users via user meta"). Public so other
+	 * classes reading it (Cron\RenewalReminder, future alert/notice
+	 * dispatch) share one literal rather than duplicating the string.
+	 */
+	public const WHATSAPP_META_KEY = 'rm_whatsapp_number';
 
 	private PropertyStaff $property_staff;
 	private PropertyLandlord $property_landlords;
@@ -132,8 +142,9 @@ final class StaffRolesController {
 			}
 		}
 
-		$all_properties = $this->properties->all_active();
-		$list_url       = add_query_arg( 'page', 'chrx-rm-staff-roles', admin_url( 'admin.php' ) );
+		$all_properties  = $this->properties->all_active();
+		$list_url        = add_query_arg( 'page', 'chrx-rm-staff-roles', admin_url( 'admin.php' ) );
+		$whatsapp_number = null !== $user ? (string) get_user_meta( $user_id, self::WHATSAPP_META_KEY, true ) : '';
 
 		include \ChrxRentalManager\PLUGIN_DIR . '/templates/admin/staff-roles-form.php';
 	}
@@ -147,6 +158,8 @@ final class StaffRolesController {
 		$role = isset( $_POST['rm_role'] ) ? sanitize_key( wp_unslash( $_POST['rm_role'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
 		$property_ids = isset( $_POST['rm_property_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['rm_property_ids'] ) ) : array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via check_admin_referer().
+		$whatsapp_number_raw = isset( $_POST['rm_whatsapp_number'] ) ? sanitize_text_field( wp_unslash( $_POST['rm_whatsapp_number'] ) ) : '';
 
 		$back_to_form = add_query_arg(
 			array(
@@ -183,9 +196,24 @@ final class StaffRolesController {
 		}
 
 		$this->sync_property_assignments( $user_id, $role, $property_ids );
+		$this->save_whatsapp_number( $user_id, $whatsapp_number_raw );
 
 		wp_safe_redirect( add_query_arg( 'page', 'chrx-rm-staff-roles', admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	private function save_whatsapp_number( int $user_id, string $raw ): void {
+		if ( '' === $raw ) {
+			delete_user_meta( $user_id, self::WHATSAPP_META_KEY );
+
+			return;
+		}
+
+		$normalized = PhoneNumber::normalize_e164( $raw, Settings::whatsapp_default_country_code() );
+
+		if ( null !== $normalized ) {
+			update_user_meta( $user_id, self::WHATSAPP_META_KEY, $normalized );
+		}
 	}
 
 	/**

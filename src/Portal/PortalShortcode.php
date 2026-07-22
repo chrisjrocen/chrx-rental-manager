@@ -5,7 +5,10 @@ declare( strict_types = 1 );
 namespace ChrxRentalManager\Portal;
 
 use ChrxRentalManager\Admin\Support\Ledger;
+use ChrxRentalManager\Admin\Support\Settings;
+use ChrxRentalManager\Cron\AlertDispatcher;
 use ChrxRentalManager\Data\Charge;
+use ChrxRentalManager\Data\MoveOutNotice;
 use ChrxRentalManager\Data\Payment;
 use ChrxRentalManager\Data\Property;
 use ChrxRentalManager\Data\Receipt;
@@ -44,6 +47,8 @@ final class PortalShortcode {
 	private Payment $payments;
 	private Receipt $receipts;
 	private Ledger $ledger;
+	private AlertDispatcher $alert_dispatcher;
+	private MoveOutNotice $notices;
 
 	public function __construct(
 		?PortalContext $context = null,
@@ -52,15 +57,19 @@ final class PortalShortcode {
 		?Charge $charges = null,
 		?Payment $payments = null,
 		?Receipt $receipts = null,
-		?Ledger $ledger = null
+		?Ledger $ledger = null,
+		?AlertDispatcher $alert_dispatcher = null,
+		?MoveOutNotice $notices = null
 	) {
-		$this->context    = $context ?? new PortalContext();
-		$this->units      = $units ?? new Unit();
-		$this->properties = $properties ?? new Property();
-		$this->charges    = $charges ?? new Charge();
-		$this->payments   = $payments ?? new Payment();
-		$this->receipts   = $receipts ?? new Receipt();
-		$this->ledger     = $ledger ?? new Ledger( $this->charges, $this->payments );
+		$this->context          = $context ?? new PortalContext();
+		$this->units            = $units ?? new Unit();
+		$this->properties       = $properties ?? new Property();
+		$this->charges          = $charges ?? new Charge();
+		$this->payments         = $payments ?? new Payment();
+		$this->receipts         = $receipts ?? new Receipt();
+		$this->ledger           = $ledger ?? new Ledger( $this->charges, $this->payments );
+		$this->alert_dispatcher = $alert_dispatcher ?? new AlertDispatcher();
+		$this->notices          = $notices ?? new MoveOutNotice();
 	}
 
 	public function register(): void {
@@ -148,17 +157,48 @@ final class PortalShortcode {
 			}
 		}
 
+		// v2 (SPEC.md §4.5/§4.9): Pay Now is only ever offered against the
+		// next-due charge shown on this card, and only when the gateway is
+		// actually usable — the template still needs the raw availability
+		// flag plus the charge's own outstanding balance to decide whether
+		// to show the button at all (e.g. below Nylon Pay's minimum).
+		$nylonpay_available          = Settings::nylonpay_is_available();
+		$next_due_charge_outstanding = null !== $next_due_charge ? $this->ledger->outstanding_for_charge( $next_due_charge ) : 0.0;
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param (set by PortalPayNowController's redirect), no state change; the referenced transaction's ownership is re-checked by the status-poll REST route before any data is shown.
+		$pay_reference = isset( $_GET['rm_pay_ref'] ) ? sanitize_text_field( wp_unslash( $_GET['rm_pay_ref'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param, no state change.
+		$pay_error = isset( $_GET['rm_pay_error'] );
+
+		// v2 (SPEC.md §4.8): banner alerts for this tenant's own unit/
+		// property only — restrict_to_property_ids = [their property]
+		// (not null) so an account-wide alert never reaches the portal,
+		// mirroring every other viewer's scoping; is_recipient_of() then
+		// narrows further to alerts actually addressed to this tenant
+		// specifically (a unit-level alert about a different unit in the
+		// same property must not show here even though the property
+		// matches).
+		$alert_banners = null === $property
+			? array()
+			: $this->alert_dispatcher->banners_for( array( (int) $property['id'] ), (int) $tenant['id'], get_current_user_id() );
+
 		return $this->render_partial(
 			'templates/portal/home.php',
 			array(
-				'tenant'          => $tenant,
-				'lease'           => $lease,
-				'unit'            => $unit,
-				'property'        => $property,
-				'balance'         => $balance,
-				'is_overdue'      => $is_overdue,
-				'late_fee_total'  => $late_fee_total,
-				'next_due_charge' => $next_due_charge,
+				'tenant'                      => $tenant,
+				'lease'                       => $lease,
+				'unit'                        => $unit,
+				'property'                    => $property,
+				'balance'                     => $balance,
+				'is_overdue'                  => $is_overdue,
+				'late_fee_total'              => $late_fee_total,
+				'next_due_charge'             => $next_due_charge,
+				'next_due_charge_outstanding' => $next_due_charge_outstanding,
+				'nylonpay_available'          => $nylonpay_available,
+				'nylonpay_minimum_amount'     => Settings::NYLONPAY_MINIMUM_AMOUNT,
+				'pay_reference'               => $pay_reference,
+				'pay_error'                   => $pay_error,
+				'alert_banners'               => $alert_banners,
 			)
 		);
 	}
@@ -171,13 +211,30 @@ final class PortalShortcode {
 		$unit     = $this->units->find( (int) $lease['unit_id'] );
 		$property = null !== $unit ? $this->properties->find( (int) $unit['property_id'] ) : null;
 
+		// v2 (SPEC.md §4.5/§4.10): "The portal shows the computed earliest
+		// move-out date per the notice policy and the rent owed through
+		// the notice period."
+		$active_notice = \ChrxRentalManager\Data\Lease::STATUS_ACTIVE === $lease['status']
+			? $this->notices->active_for_lease( (int) $lease['id'] )
+			: null;
+
+		$notice_rent_owed = null !== $active_notice
+			? \ChrxRentalManager\Leases\MoveOutNoticeService::early_leave_shortfall( $lease, current_time( 'Y-m-d' ), (string) $active_notice['earliest_move_out_date'] )
+			: 0.0;
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param (set by PortalMoveOutNoticeController's redirect), no state change.
+		$notice_ok = isset( $_GET['rm_notice_ok'] ) ? '1' === $_GET['rm_notice_ok'] : null;
+
 		return $this->render_partial(
 			'templates/portal/lease-details.php',
 			array(
-				'tenant'   => $tenant,
-				'lease'    => $lease,
-				'unit'     => $unit,
-				'property' => $property,
+				'tenant'           => $tenant,
+				'lease'            => $lease,
+				'unit'             => $unit,
+				'property'         => $property,
+				'active_notice'    => $active_notice,
+				'notice_rent_owed' => $notice_rent_owed,
+				'notice_ok'        => $notice_ok,
 			)
 		);
 	}

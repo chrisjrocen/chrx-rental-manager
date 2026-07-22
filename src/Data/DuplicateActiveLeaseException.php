@@ -13,12 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  * active leases (SPEC.md §4.1 edge case). Callers (admin controllers in a
  * later phase) catch this to show "blocked with a clear error naming the
  * conflicting lease" per spec, rather than letting it become a fatal.
+ *
+ * Not final: CapacityExceededException (v2) extends this so existing v1
+ * catch sites keep working unchanged for the capacity=1 case.
  */
-final class DuplicateActiveLeaseException extends \RuntimeException {
+class DuplicateActiveLeaseException extends \RuntimeException {
 
-	public function __construct( public readonly int $conflicting_lease_id ) {
+	public function __construct( public readonly int $conflicting_lease_id, ?string $message = null ) {
 		parent::__construct(
-			sprintf( 'Unit already has an active lease (#%d).', $conflicting_lease_id )
+			$message ?? sprintf( 'Unit already has an active lease (#%d).', $conflicting_lease_id )
 		);
 	}
 }

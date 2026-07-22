@@ -17,9 +17,10 @@ final class Document extends AbstractRepository {
 
 	protected const TABLE = 'rm_documents';
 
-	public const ENTITY_LEASE  = 'lease';
-	public const ENTITY_UNIT   = 'unit';
-	public const ENTITY_TENANT = 'tenant';
+	public const ENTITY_LEASE   = 'lease';
+	public const ENTITY_UNIT    = 'unit';
+	public const ENTITY_TENANT  = 'tenant';
+	public const ENTITY_EXPENSE = 'expense';
 
 	/**
 	 * @return array<int,array<string,mixed>>

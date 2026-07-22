@@ -8,12 +8,14 @@
  * $open_charges (array<int,array> with 'outstanding' added),
  * $preselected_charge_id (int), $is_closing_out (bool), $list_url is not
  * set here — use LeasesController's page slug directly — $notice (?string).
+ * v2 (SPEC.md §4.9): $nylonpay_available (bool).
  *
  * @package ChrxRentalManager
  */
 
 use ChrxRentalManager\Admin\LeasesController;
 use ChrxRentalManager\Admin\RecordPaymentController;
+use ChrxRentalManager\Admin\SendPaymentRequestController;
 use ChrxRentalManager\Admin\Support\Money;
 use ChrxRentalManager\Data\Charge;
 use ChrxRentalManager\Data\Payment;
@@ -113,6 +115,46 @@ $lease_detail_url = add_query_arg(
 			</div>
 		</div>
 	</form>
+
+	<?php if ( $nylonpay_available && array() !== $open_charges ) : ?>
+		<div class="chrx-rm-panel" style="max-width:460px;margin-top:20px;">
+			<div class="chrx-rm-panel__header"><span><?php esc_html_e( 'Or send a Nylon Pay request', 'chrx-rental-manager' ); ?></span></div>
+			<div class="chrx-rm-panel__body">
+				<p class="description" style="margin-top:0;"><?php esc_html_e( 'The tenant gets a mobile-money prompt on their phone; the payment records itself automatically once confirmed.', 'chrx-rental-manager' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="rm_send_payment_request">
+					<input type="hidden" name="lease_id" value="<?php echo esc_attr( (string) $lease['id'] ); ?>">
+					<?php wp_nonce_field( SendPaymentRequestController::nonce_action() ); ?>
+
+					<label for="rm_gw_charge_id" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;"><?php esc_html_e( 'Charge', 'chrx-rental-manager' ); ?></label>
+					<select id="rm_gw_charge_id" name="rm_charge_id" style="width:100%;box-sizing:border-box;margin-bottom:12px;" required>
+						<?php foreach ( $open_charges as $charge ) : ?>
+							<option value="<?php echo esc_attr( (string) $charge['id'] ); ?>" data-outstanding="<?php echo esc_attr( (string) $charge['outstanding'] ); ?>">
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: 1: charge type/period, 2: outstanding amount */
+										__( '%1$s — outstanding %2$s', 'chrx-rental-manager' ),
+										( Charge::TYPE_LATE_FEE === $charge['type'] ? __( 'Late fee', 'chrx-rental-manager' ) : __( 'Rent', 'chrx-rental-manager' ) ) . ' ' . gmdate( 'M Y', strtotime( $charge['period_start'] ) ),
+										Money::format( (float) $charge['outstanding'] )
+									)
+								);
+								?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+
+					<label for="rm_gw_phone" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;"><?php esc_html_e( 'Phone to charge', 'chrx-rental-manager' ); ?></label>
+					<input type="text" id="rm_gw_phone" name="rm_phone" value="<?php echo esc_attr( (string) ( $tenant['phone'] ?? '' ) ); ?>" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;margin-bottom:12px;" required>
+
+					<label for="rm_gw_amount" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;"><?php esc_html_e( 'Amount', 'chrx-rental-manager' ); ?></label>
+					<input type="text" id="rm_gw_amount" name="rm_amount" value="<?php echo esc_attr( (string) ( $open_charges[0]['outstanding'] ?? '' ) ); ?>" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;margin-bottom:16px;" required>
+
+					<button type="submit" class="button"><?php esc_html_e( 'Send Nylon Pay request', 'chrx-rental-manager' ); ?></button>
+				</form>
+			</div>
+		</div>
+	<?php endif; ?>
 </div>
 <script>
 (function () {

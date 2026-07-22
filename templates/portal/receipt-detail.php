@@ -12,6 +12,7 @@ use ChrxRentalManager\Admin\Support\Money;
 use ChrxRentalManager\Admin\Support\Settings;
 use ChrxRentalManager\Data\Charge;
 use ChrxRentalManager\Portal\PortalReceiptDownload;
+use ChrxRentalManager\Portal\PortalReceiptPrint;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -39,6 +40,7 @@ $method_labels = array(
 $method_label  = $method_labels[ $payment['method'] ] ?? ucfirst( str_replace( '_', ' ', $payment['method'] ) );
 
 $download_url = PortalReceiptDownload::download_url( (int) $receipt['id'] );
+$print_url    = PortalReceiptPrint::print_url( (int) $receipt['id'] );
 ?>
 <div class="chrx-rm-portal">
 	<?php require \ChrxRentalManager\PLUGIN_DIR . '/templates/portal/partials/desktop-nav.php'; ?>
@@ -78,6 +80,9 @@ $download_url = PortalReceiptDownload::download_url( (int) $receipt['id'] );
 
 		<a href="<?php echo esc_url( $download_url ); ?>" target="_blank" rel="noopener" class="chrx-rm-portal__download-button">
 			<?php esc_html_e( 'Download PDF', 'chrx-rental-manager' ); ?>
+		</a>
+		<a href="<?php echo esc_url( $print_url ); ?>" target="_blank" rel="noopener" class="chrx-rm-portal__download-button" style="background:#f6f7f7;color:#1d2327;margin-top:10px;">
+			<?php esc_html_e( 'Print', 'chrx-rental-manager' ); ?>
 		</a>
 	</div>
 </div>

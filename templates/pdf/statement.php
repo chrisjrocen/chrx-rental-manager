@@ -8,6 +8,8 @@
  * $period_label, $prepared_date, $line_items (array<int,array{unit_label,
  * tenant_name:?string,collected:float}>), $gross, $fee_label, $fee_amount,
  * $net.
+ * v2 (SPEC.md §4.4, P&L upgrade): $expense_lines (array<int,array{label,
+ * amount}>), $expenses.
  *
  * @package ChrxRentalManager
  */
@@ -36,6 +38,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	.totals .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
 	.totals .fee { color: #646970; }
 	.totals .net { font-weight: 800; font-size: 14px; border-top: 1px solid #1d2327; margin-top: 8px; padding-top: 8px; }
+	.footnote { color: #8c8f94; font-size: 10px; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -76,10 +79,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</tbody>
 	</table>
 
+	<?php if ( array() !== $expense_lines ) : ?>
+		<table class="lines">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Expense', 'chrx-rental-manager' ); ?></th>
+					<th class="amount"><?php esc_html_e( 'Amount', 'chrx-rental-manager' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $expense_lines as $expense_line ) : ?>
+					<tr>
+						<td><?php echo esc_html( $expense_line['label'] ); ?></td>
+						<td class="amount"><?php echo esc_html( $expense_line['amount'] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+	<?php endif; ?>
+
 	<div class="totals">
 		<div class="row"><span><?php esc_html_e( 'Gross collected', 'chrx-rental-manager' ); ?></span><span><?php echo esc_html( $gross ); ?></span></div>
 		<div class="row fee"><span><?php echo esc_html( $fee_label ); ?></span><span>&#8211; <?php echo esc_html( $fee_amount ); ?></span></div>
+		<div class="row fee"><span><?php esc_html_e( 'Expenses', 'chrx-rental-manager' ); ?></span><span>&#8211; <?php echo esc_html( $expenses ); ?></span></div>
 		<div class="row net"><span><?php esc_html_e( 'Net due to owner', 'chrx-rental-manager' ); ?></span><span><?php echo esc_html( $net ); ?></span></div>
 	</div>
+
+	<p class="footnote">
+		<?php esc_html_e( 'Account-level expenses (not scoped to this property) are excluded from this statement — they appear only on admin-level expense reports.', 'chrx-rental-manager' ); ?>
+	</p>
 </body>
 </html>
